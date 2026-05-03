@@ -1,6 +1,7 @@
+from functools import wraps
 from flask import Blueprint, request, jsonify
 from db import get_connection, UserDB
-from config import ADMIN_PHONE_NUMBER
+from config import ADMIN_PHONE_NUMBER, ADMIN_API_KEY
 
 admin_bp = Blueprint('admin', __name__)
 db = UserDB()
@@ -10,7 +11,18 @@ def is_admin(phone: str) -> bool:
     return phone == ADMIN_PHONE_NUMBER
 
 
+def require_admin_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = request.headers.get('X-Admin-Key') or request.args.get('admin_key')
+        if not ADMIN_API_KEY or key != ADMIN_API_KEY:
+            return jsonify({"error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
 @admin_bp.route('/admin/stats', methods=['GET'])
+@require_admin_key
 def get_stats():
     conn = get_connection()
     c = conn.cursor()
@@ -39,6 +51,7 @@ def get_stats():
 
 
 @admin_bp.route('/admin/flag_user', methods=['POST'])
+@require_admin_key
 def flag_user():
     data = request.json
     user_id = data.get('user_id')
@@ -49,6 +62,7 @@ def flag_user():
 
 
 @admin_bp.route('/admin/users', methods=['GET'])
+@require_admin_key
 def list_users():
     conn = get_connection()
     c = conn.cursor()
