@@ -117,22 +117,22 @@ async def _process_input(update: Update, user_id: str, name: str, db_user: dict,
             await update.message.reply_text(CHECKLIST_MESSAGE)
             return
 
+        if text.lower() == 'yes' and user_id in pending_plan_data:
+            extracted = pending_plan_data.pop(user_id)
+            transcript_saved = extracted.pop('transcript', '')
+            goal_id = db.save_goal(user_id, extracted, transcript_saved)
+            db.save_targets(goal_id, extracted.get('daily_targets', []))
+            db.update_user(user_id, onboarded=True)
+            pending_onboarding.pop(user_id, None)
+            await update.message.reply_text("Plan locked in. Your first check-in is tomorrow morning. Let us go.")
+            return
+
         response_text, extracted_data = handle_onboarding_voice(user_id, text)
         await update.message.reply_text(response_text)
 
         if extracted_data:
             pending_plan_data[user_id] = extracted_data
             pending_plan_data[user_id]['transcript'] = text
-        return
-
-    if text.lower() == 'yes' and user_id in pending_plan_data:
-        extracted = pending_plan_data.pop(user_id)
-        transcript_saved = extracted.pop('transcript', '')
-        goal_id = db.save_goal(user_id, extracted, transcript_saved)
-        db.save_targets(goal_id, extracted.get('daily_targets', []))
-        db.update_user(user_id, onboarded=True)
-        pending_onboarding.pop(user_id, None)
-        await update.message.reply_text("Plan locked in. Your first check-in is tomorrow morning. Let us go.")
         return
 
     active_goals = db.get_active_goals(user_id)

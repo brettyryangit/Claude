@@ -4,6 +4,14 @@ from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, MAX_TOKENS
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
+
+def _get_text(response) -> str:
+    for block in response.content:
+        if hasattr(block, 'text'):
+            return block.text
+    raise ValueError(f"No text block in API response. Got: {[type(b).__name__ for b in response.content]}")
+
+
 SYSTEM_PROMPT = """You are ForgeAI, an elite accountability coach. You help users achieve their goals through daily check-ins, honest feedback, and pattern recognition.
 
 You ONLY discuss:
@@ -76,9 +84,9 @@ If safe, return this JSON with all fields filled in:
     )
 
     try:
-        return json.loads(response.content[0].text)
+        return json.loads(_get_text(response))
     except Exception:
-        text = response.content[0].text
+        text = _get_text(response)
         start = text.find('{')
         end = text.rfind('}') + 1
         if start != -1 and end > start:
@@ -127,7 +135,7 @@ Generate the feedback now:"""
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.content[0].text
+    return _get_text(response)
 
 
 def generate_pattern_insight(goal_title: str, checkin_history: list) -> str:
@@ -162,7 +170,7 @@ Be direct and specific. No generic advice."""
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.content[0].text
+    return _get_text(response)
 
 
 def generate_weekly_review(goal_title: str, week_checkins: list) -> str:
@@ -188,7 +196,7 @@ Keep it under 200 words. Direct. Data-driven. No empty praise."""
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.content[0].text
+    return _get_text(response)
 
 
 def answer_question(question: str, user_context: dict) -> str:
@@ -210,4 +218,4 @@ If the question is outside that scope, redirect them back to their goals."""
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.content[0].text
+    return _get_text(response)
