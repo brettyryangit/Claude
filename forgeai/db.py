@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg2cffi as psycopg2
 import psycopg2.extras
 import uuid
 from datetime import datetime, timedelta
