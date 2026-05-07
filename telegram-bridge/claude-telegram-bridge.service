@@ -1,0 +1,13 @@
+[Unit]
+Description=Claude Code Telegram Bridge
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/YOUR_USERNAME/.claude/telegram-bridge/bridge.py
+WorkingDirectory=/home/YOUR_USERNAME/.claude/telegram-bridge
+Restart=on-failure
+RestartSec=10
+Environment=PATH=/usr/local/bin:/usr/bin:/home/YOUR_USERNAME/.local/bin
+
+[Install]
+WantedBy=default.target
