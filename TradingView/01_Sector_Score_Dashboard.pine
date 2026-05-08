@@ -1,0 +1,88 @@
+//@version=5
+indicator("Sector Score Dashboard", overlay=true, max_lines_count=0, max_boxes_count=0)
+
+// ── Score function ─────────────────────────────────────────────────────────────
+// Returns [total_score, vol_ratio]
+f_score(c, v, e20, e50, e200, vma, c_20ago, spy_c, spy_c20) =>
+    // 30 pts: price vs EMAs
+    emaScore = (c > e200 ? 10 : 0) + (c > e50 ? 10 : 0) + (c > e20 ? 10 : 0)
+    // 25 pts: volume vs 20-day average
+    vr       = vma > 0 ? v / vma : 1.0
+    volScore = vr >= 2.0 ? 25 : vr >= 1.5 ? 20 : vr >= 1.25 ? 15 : vr >= 1.0 ? 10 : 5
+    // 25 pts: RS vs SPY momentum over 20 bars
+    rsNow    = spy_c    > 0 ? c       / spy_c    : 1.0
+    rsAgo    = spy_c20  > 0 ? c_20ago / spy_c20  : 1.0
+    rsDelta  = rsAgo    > 0 ? (rsNow / rsAgo - 1.0) * 100.0 : 0.0
+    rsScore  = rsDelta > 3.0 ? 25 : rsDelta > 1.0 ? 20 : rsDelta > 0.0 ? 15 : rsDelta > -1.0 ? 10 : 5
+    // 20 pts: EMA alignment (proxy for market structure)
+    structScore = e20 > e50 and e50 > e200 ? 20 : e20 > e50 ? 15 : e50 > e200 ? 10 : 0
+    [emaScore + volScore + rsScore + structScore, vr]
+
+// ── Sector data (1 security call per sector via tuple) ────────────────────────
+[xlc_c,  xlc_v,  xlc_e20,  xlc_e50,  xlc_e200,  xlc_vma]  = request.security("AMEX:XLC",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xly_c,  xly_v,  xly_e20,  xly_e50,  xly_e200,  xly_vma]  = request.security("AMEX:XLY",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlp_c,  xlp_v,  xlp_e20,  xlp_e50,  xlp_e200,  xlp_vma]  = request.security("AMEX:XLP",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xle_c,  xle_v,  xle_e20,  xle_e50,  xle_e200,  xle_vma]  = request.security("AMEX:XLE",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlf_c,  xlf_v,  xlf_e20,  xlf_e50,  xlf_e200,  xlf_vma]  = request.security("AMEX:XLF",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlv_c,  xlv_v,  xlv_e20,  xlv_e50,  xlv_e200,  xlv_vma]  = request.security("AMEX:XLV",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xli_c,  xli_v,  xli_e20,  xli_e50,  xli_e200,  xli_vma]  = request.security("AMEX:XLI",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlb_c,  xlb_v,  xlb_e20,  xlb_e50,  xlb_e200,  xlb_vma]  = request.security("AMEX:XLB",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlre_c, xlre_v, xlre_e20, xlre_e50, xlre_e200, xlre_vma] = request.security("AMEX:XLRE", timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlk_c,  xlk_v,  xlk_e20,  xlk_e50,  xlk_e200,  xlk_vma]  = request.security("AMEX:XLK",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+[xlu_c,  xlu_v,  xlu_e20,  xlu_e50,  xlu_e200,  xlu_vma]  = request.security("AMEX:XLU",  timeframe.period, [close, volume, ta.ema(close,20), ta.ema(close,50), ta.ema(close,200), ta.sma(volume,20)])
+
+spy_c   = request.security("AMEX:SPY", timeframe.period, close)
+spy_c20 = request.security("AMEX:SPY", timeframe.period, close[20])
+
+// ── Compute scores ────────────────────────────────────────────────────────────
+[s_xlc,  vr_xlc]  = f_score(xlc_c,  xlc_v,  xlc_e20,  xlc_e50,  xlc_e200,  xlc_vma,  xlc_c[20],  spy_c, spy_c20)
+[s_xly,  vr_xly]  = f_score(xly_c,  xly_v,  xly_e20,  xly_e50,  xly_e200,  xly_vma,  xly_c[20],  spy_c, spy_c20)
+[s_xlp,  vr_xlp]  = f_score(xlp_c,  xlp_v,  xlp_e20,  xlp_e50,  xlp_e200,  xlp_vma,  xlp_c[20],  spy_c, spy_c20)
+[s_xle,  vr_xle]  = f_score(xle_c,  xle_v,  xle_e20,  xle_e50,  xle_e200,  xle_vma,  xle_c[20],  spy_c, spy_c20)
+[s_xlf,  vr_xlf]  = f_score(xlf_c,  xlf_v,  xlf_e20,  xlf_e50,  xlf_e200,  xlf_vma,  xlf_c[20],  spy_c, spy_c20)
+[s_xlv,  vr_xlv]  = f_score(xlv_c,  xlv_v,  xlv_e20,  xlv_e50,  xlv_e200,  xlv_vma,  xlv_c[20],  spy_c, spy_c20)
+[s_xli,  vr_xli]  = f_score(xli_c,  xli_v,  xli_e20,  xli_e50,  xli_e200,  xli_vma,  xli_c[20],  spy_c, spy_c20)
+[s_xlb,  vr_xlb]  = f_score(xlb_c,  xlb_v,  xlb_e20,  xlb_e50,  xlb_e200,  xlb_vma,  xlb_c[20],  spy_c, spy_c20)
+[s_xlre, vr_xlre] = f_score(xlre_c, xlre_v, xlre_e20, xlre_e50, xlre_e200, xlre_vma, xlre_c[20], spy_c, spy_c20)
+[s_xlk,  vr_xlk]  = f_score(xlk_c,  xlk_v,  xlk_e20,  xlk_e50,  xlk_e200,  xlk_vma,  xlk_c[20],  spy_c, spy_c20)
+[s_xlu,  vr_xlu]  = f_score(xlu_c,  xlu_v,  xlu_e20,  xlu_e50,  xlu_e200,  xlu_vma,  xlu_c[20],  spy_c, spy_c20)
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+var table tbl = table.new(position.top_right, 5, 13,
+     bgcolor=color.new(color.black, 15),
+     border_width=1, border_color=color.new(color.gray, 50))
+
+if barstate.islast
+    scores = array.from(float(s_xlc), float(s_xly), float(s_xlp), float(s_xle), float(s_xlf),
+                        float(s_xlv), float(s_xli), float(s_xlb), float(s_xlre), float(s_xlk), float(s_xlu))
+    names  = array.from("XLC","XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLU")
+    vols   = array.from(vr_xlc, vr_xly, vr_xlp, vr_xle, vr_xlf, vr_xlv, vr_xli, vr_xlb, vr_xlre, vr_xlk, vr_xlu)
+
+    sorted = array.sort_indices(scores, order.descending)
+
+    hdrBg = color.new(color.navy, 10)
+    table.cell(tbl, 0, 0, "RANK",   bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 0, "SECTOR", bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 0, "SCORE",  bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 3, 0, "VOL ×",  bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 4, 0, "BIAS",   bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+
+    for rank = 0 to 10
+        idx   = array.get(sorted, rank)
+        score = array.get(scores, idx)
+        name  = array.get(names, idx)
+        vr    = array.get(vols, idx)
+        row   = rank + 1
+
+        rowBg    = score >= 70 ? color.new(color.teal, 65)   :
+                   score >= 50 ? color.new(color.orange, 75) :
+                                 color.new(color.maroon, 65)
+        sigTxt   = score >= 70 ? "BULL" : score >= 50 ? "NEUT" : "BEAR"
+        sigColor = score >= 70 ? color.lime : score >= 50 ? color.orange : color.red
+        volColor = vr >= 1.5 ? color.yellow : color.white
+
+        table.cell(tbl, 0, row, str.tostring(rank + 1),                bgcolor=rowBg, text_color=color.white, text_size=size.small)
+        table.cell(tbl, 1, row, name,                                   bgcolor=rowBg, text_color=color.white, text_size=size.small)
+        table.cell(tbl, 2, row, str.tostring(math.round(score)),        bgcolor=rowBg, text_color=color.white, text_size=size.small)
+        table.cell(tbl, 3, row, str.tostring(math.round(vr, 2)) + "×", bgcolor=rowBg, text_color=volColor,    text_size=size.small)
+        table.cell(tbl, 4, row, sigTxt,                                 bgcolor=rowBg, text_color=sigColor,    text_size=size.small)

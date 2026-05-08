@@ -1,0 +1,148 @@
+//@version=5
+indicator("Risk On / Off Panel", overlay=true, max_lines_count=0, max_boxes_count=0)
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+// Sector ratio pairs
+[xlk_c, xlk_e20, xlk_e50] = request.security("AMEX:XLK",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[xlu_c, xlu_e20, xlu_e50] = request.security("AMEX:XLU",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[xly_c, xly_e20, xly_e50] = request.security("AMEX:XLY",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[xlp_c, xlp_e20, xlp_e50] = request.security("AMEX:XLP",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[xli_c, xli_e20, xli_e50] = request.security("AMEX:XLI",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[xlf_c, xlf_e20, xlf_e50] = request.security("AMEX:XLF",  timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+
+// Macro
+[spy_c,  spy_e50,  spy_e200]  = request.security("AMEX:SPY",  timeframe.period, [close, ta.ema(close,50), ta.ema(close,200)])
+[tlt_c,  tlt_e20,  tlt_e50]   = request.security("NASDAQ:TLT", timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+[vix_c,  vix_prev]            = request.security("TVC:VIX",   timeframe.period, [close, close[1]])
+[dxy_c,  dxy_e20,  dxy_e50]   = request.security("TVC:DXY",   timeframe.period, [close, ta.ema(close,20), ta.ema(close,50)])
+
+// ── Risk-on/off logic ─────────────────────────────────────────────────────────
+// XLK/XLU ratio: rising = risk-on (growth preferred over utilities)
+xlk_xlu      = xlu_c > 0 ? xlk_c / xlu_c : na
+xlk_xlu_ago  = xlu_c[20] > 0 ? xlk_c[20] / xlu_c[20] : na
+xlk_xlu_bull = not na(xlk_xlu) and not na(xlk_xlu_ago) and xlk_xlu > xlk_xlu_ago
+
+// XLY/XLP ratio: rising = risk-on (discretionary preferred over staples)
+xly_xlp      = xlp_c > 0 ? xly_c / xlp_c : na
+xly_xlp_ago  = xlp_c[20] > 0 ? xly_c[20] / xlp_c[20] : na
+xly_xlp_bull = not na(xly_xlp) and not na(xly_xlp_ago) and xly_xlp > xly_xlp_ago
+
+// XLF/XLU ratio: rising = risk-on (financials vs utilities)
+xlf_xlu      = xlu_c > 0 ? xlf_c / xlu_c : na
+xlf_xlu_bull = xlf_c > xlf_e20 and xlu_c < xlu_e20
+
+// SPY trend
+spy_bull    = spy_c > spy_e200
+spy_above50 = spy_c > spy_e50
+
+// VIX
+vixRising   = vix_c > vix_prev
+vixHigh     = vix_c > 20
+vixExtreme  = vix_c > 30
+
+// TLT (bonds): falling bonds = money moving into equities = risk-on
+tlt_bear    = tlt_c < tlt_e20
+tlt_trend   = tlt_c > tlt_e50
+
+// DXY: strong dollar hurts commodities and international; rising = caution for XLE/XLB
+dxy_bull    = dxy_c > dxy_e20
+
+// ── Risk score (0–100) ────────────────────────────────────────────────────────
+riskScore = 0
+riskScore := riskScore + (xlk_xlu_bull ? 20 : 0)   // growth vs defensive
+riskScore := riskScore + (xly_xlp_bull ? 20 : 0)   // cyclical vs defensive
+riskScore := riskScore + (spy_bull     ? 20 : 0)   // broad market above 200
+riskScore := riskScore + (not vixHigh  ? 20 : 0)   // VIX below 20
+riskScore := riskScore + (tlt_bear     ? 20 : 0)   // bonds falling (money into stocks)
+
+riskLabel = riskScore >= 80 ? "RISK ON" :
+            riskScore >= 60 ? "RISK LEANING ON" :
+            riskScore >= 40 ? "MIXED" :
+            riskScore >= 20 ? "RISK LEANING OFF" :
+                              "RISK OFF"
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+var table tbl = table.new(position.bottom_right, 4, 11,
+     bgcolor=color.new(color.black, 15),
+     border_width=1, border_color=color.new(color.gray, 50))
+
+f_bullet(cond) => cond ? "▲ ON" : "▼ OFF"
+f_color(cond)  => cond ? color.lime : color.red
+
+if barstate.islast
+    // Header
+    hdrBg    = color.new(color.navy, 10)
+    riskBg   = riskScore >= 60 ? color.new(color.teal, 50) : riskScore >= 40 ? color.new(color.orange, 60) : color.new(color.maroon, 50)
+    riskTxtC = riskScore >= 60 ? color.lime : riskScore >= 40 ? color.orange : color.red
+
+    table.cell(tbl, 0, 0, "INDICATOR",       bgcolor=hdrBg,  text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 0, "VALUE",           bgcolor=hdrBg,  text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 0, "SIGNAL",          bgcolor=hdrBg,  text_color=color.white, text_size=size.small)
+    table.cell(tbl, 3, 0, "IMPLICATION",     bgcolor=hdrBg,  text_color=color.white, text_size=size.small)
+
+    // Risk Score summary row
+    table.cell(tbl, 0, 1, "RISK SCORE",      bgcolor=riskBg, text_color=color.white,    text_size=size.small)
+    table.cell(tbl, 1, 1, str.tostring(riskScore) + "/100", bgcolor=riskBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 1, riskLabel,         bgcolor=riskBg, text_color=riskTxtC,       text_size=size.normal)
+    table.cell(tbl, 3, 1, riskScore >= 60 ? "BUY LEADERS" : riskScore >= 40 ? "SELECTIVE" : "STAY DEFENSIVE", bgcolor=riskBg, text_color=riskTxtC, text_size=size.small)
+
+    // Row data: [name, value_str, signal_bool, implication]
+    rowBg = color.new(color.black, 20)
+
+    // XLK/XLU
+    table.cell(tbl, 0, 2, "XLK/XLU",         bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 2, str.tostring(math.round(xlk_xlu, 3)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 2, f_bullet(xlk_xlu_bull), bgcolor=rowBg, text_color=f_color(xlk_xlu_bull), text_size=size.small)
+    table.cell(tbl, 3, 2, xlk_xlu_bull ? "Growth favored" : "Defensives favored", bgcolor=rowBg, text_color=f_color(xlk_xlu_bull), text_size=size.small)
+
+    // XLY/XLP
+    table.cell(tbl, 0, 3, "XLY/XLP",         bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 3, str.tostring(math.round(xly_xlp, 3)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 3, f_bullet(xly_xlp_bull), bgcolor=rowBg, text_color=f_color(xly_xlp_bull), text_size=size.small)
+    table.cell(tbl, 3, 3, xly_xlp_bull ? "Consumer spending up" : "Staples preferred", bgcolor=rowBg, text_color=f_color(xly_xlp_bull), text_size=size.small)
+
+    // SPY vs 200 EMA
+    table.cell(tbl, 0, 4, "SPY vs 200 EMA",  bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 4, str.tostring(math.round(spy_c, 2)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 4, f_bullet(spy_bull), bgcolor=rowBg, text_color=f_color(spy_bull), text_size=size.small)
+    table.cell(tbl, 3, 4, spy_bull ? "Bull market" : "Bear market / correction", bgcolor=rowBg, text_color=f_color(spy_bull), text_size=size.small)
+
+    // VIX
+    table.cell(tbl, 0, 5, "VIX",             bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 5, str.tostring(math.round(vix_c, 2)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    vixOk = not vixHigh
+    table.cell(tbl, 2, 5, f_bullet(vixOk),   bgcolor=rowBg, text_color=f_color(vixOk), text_size=size.small)
+    table.cell(tbl, 3, 5, vixExtreme ? "FEAR — wait for calm" : vixHigh ? "Elevated fear" : "Low fear — OK to trade", bgcolor=rowBg, text_color=f_color(vixOk), text_size=size.small)
+
+    // TLT
+    table.cell(tbl, 0, 6, "TLT (Bonds)",     bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 6, str.tostring(math.round(tlt_c, 2)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 6, f_bullet(tlt_bear), bgcolor=rowBg, text_color=f_color(tlt_bear), text_size=size.small)
+    table.cell(tbl, 3, 6, tlt_bear ? "Money leaving bonds" : "Flight to safety", bgcolor=rowBg, text_color=f_color(tlt_bear), text_size=size.small)
+
+    // DXY
+    table.cell(tbl, 0, 7, "DXY (Dollar)",    bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 7, str.tostring(math.round(dxy_c, 2)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    dxyOk = not dxy_bull
+    table.cell(tbl, 2, 7, dxy_bull ? "▲ STRONG" : "▼ WEAK", bgcolor=rowBg, text_color=dxy_bull ? color.orange : color.lime, text_size=size.small)
+    table.cell(tbl, 3, 7, dxy_bull ? "Headwind: XLE/XLB/Intl" : "Tailwind: commodities, intl", bgcolor=rowBg, text_color=dxy_bull ? color.orange : color.lime, text_size=size.small)
+
+    // XLI/XLF (cyclicals leading)
+    cyclBull = xli_c > xli_e50 and xlf_c > xlf_e50
+    table.cell(tbl, 0, 8, "Cyclicals (XLI+XLF)", bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 8, xli_c > xli_e50 ? "XLI ok" : "XLI warn", bgcolor=rowBg, text_color=f_color(xli_c > xli_e50), text_size=size.small)
+    table.cell(tbl, 2, 8, f_bullet(cyclBull), bgcolor=rowBg, text_color=f_color(cyclBull), text_size=size.small)
+    table.cell(tbl, 3, 8, cyclBull ? "Expansion confirmed" : "Contraction risk", bgcolor=rowBg, text_color=f_color(cyclBull), text_size=size.small)
+
+    // SPY 50 EMA
+    table.cell(tbl, 0, 9, "SPY vs 50 EMA",   bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 9, str.tostring(math.round(spy_e50, 2)), bgcolor=rowBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 9, f_bullet(spy_above50), bgcolor=rowBg, text_color=f_color(spy_above50), text_size=size.small)
+    table.cell(tbl, 3, 9, spy_above50 ? "Short-term trend up" : "Short-term trend broken", bgcolor=rowBg, text_color=f_color(spy_above50), text_size=size.small)
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+alertcondition(riskScore >= 80 and riskScore[1] < 80, "Risk Score Hit 80+",  "RISK ON: Score crossed 80 — favors aggressive positioning")
+alertcondition(riskScore <= 40 and riskScore[1] > 40, "Risk Score Fell 40",  "RISK OFF: Score dropped to 40 — defensive rotation beginning")
+alertcondition(vixExtreme and not vixExtreme[1],       "VIX Extreme Spike",   "VIX above 30 — extreme fear, watch for reversal opportunity")
+alertcondition(ta.crossover(spy_c, spy_e200),          "SPY Crossed Above 200 EMA", "SPY reclaimed 200 EMA — potential bull market resumption")
+alertcondition(ta.crossunder(spy_c, spy_e200),         "SPY Crossed Below 200 EMA", "SPY lost 200 EMA — defensive posture recommended")

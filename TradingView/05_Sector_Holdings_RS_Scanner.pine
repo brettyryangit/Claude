@@ -1,0 +1,110 @@
+//@version=5
+indicator("Sector Holdings RS Scanner", overlay=true, max_lines_count=0, max_boxes_count=0)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+// Select sector and configure up to 5 holdings to compare
+sectorETF = input.symbol("AMEX:XLK", "Sector ETF")
+stock1    = input.symbol("NASDAQ:MSFT",  "Holding 1")
+stock2    = input.symbol("NASDAQ:AAPL",  "Holding 2")
+stock3    = input.symbol("NASDAQ:NVDA",  "Holding 3")
+stock4    = input.symbol("NASDAQ:AVGO",  "Holding 4")
+stock5    = input.symbol("NASDAQ:ORCL",  "Holding 5")
+rsLen     = input.int(20, "RS Lookback (bars)", minval=5)
+
+// ── Sector Holdings Presets (change inputs above to match your sector) ────────
+// XLC:  META, GOOGL, GOOG, NFLX, T
+// XLY:  AMZN, TSLA, HD, MCD, NKE
+// XLP:  PG, KO, PEP, COST, WMT
+// XLE:  XOM, CVX, COP, EOG, SLB
+// XLF:  BRK.B, JPM, V, MA, BAC
+// XLV:  LLY, UNH, JNJ, ABBV, MRK
+// XLI:  GE, RTX, HON, UNP, BA
+// XLB:  LIN, APD, SHW, FCX, NEM
+// XLRE: PLD, AMT, EQIX, SPG, CCI
+// XLK:  MSFT, AAPL, NVDA, AVGO, ORCL
+// XLU:  NEE, SO, DUK, AEP, SRE
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
+etf_c  = request.security(sectorETF, timeframe.period, close)
+spy_c  = request.security("AMEX:SPY", timeframe.period, close)
+s1_c   = request.security(stock1,    timeframe.period, close)
+s2_c   = request.security(stock2,    timeframe.period, close)
+s3_c   = request.security(stock3,    timeframe.period, close)
+s4_c   = request.security(stock4,    timeframe.period, close)
+s5_c   = request.security(stock5,    timeframe.period, close)
+
+// ── RS calculation ────────────────────────────────────────────────────────────
+// RS vs sector ETF: (stock / etf) change over rsLen bars — positive = outperforming sector
+f_rs(stk, bench) =>
+    ratio    = bench > 0 ? stk / bench : na
+    ratioAgo = bench[rsLen] > 0 ? stk[rsLen] / bench[rsLen] : na
+    ratioAgo > 0 ? (ratio / ratioAgo - 1.0) * 100.0 : na
+
+rs1_etf = f_rs(s1_c, etf_c)
+rs2_etf = f_rs(s2_c, etf_c)
+rs3_etf = f_rs(s3_c, etf_c)
+rs4_etf = f_rs(s4_c, etf_c)
+rs5_etf = f_rs(s5_c, etf_c)
+etf_spy = f_rs(etf_c, spy_c)
+
+// ── Score each holding (0-100) ────────────────────────────────────────────────
+f_holdingScore(stk_c, etf_c2) =>
+    e20  = ta.ema(stk_c,  20)
+    e50  = ta.ema(stk_c,  50)
+    e200 = ta.ema(stk_c,  200)
+    v    = request.security(syminfo.tickerid, timeframe.period, volume)  // volume proxy
+    emaScore    = (stk_c > e200 ? 30 : 0) + (stk_c > e50 ? 20 : 0) + (stk_c > e20 ? 10 : 0)
+    rsScore     = f_rs(stk_c, etf_c2)
+    rsPoints    = not na(rsScore) ? (rsScore > 5 ? 40 : rsScore > 2 ? 30 : rsScore > 0 ? 20 : rsScore > -2 ? 10 : 0) : 0
+    emaScore + rsPoints
+
+sc1 = f_holdingScore(s1_c, etf_c)
+sc2 = f_holdingScore(s2_c, etf_c)
+sc3 = f_holdingScore(s3_c, etf_c)
+sc4 = f_holdingScore(s4_c, etf_c)
+sc5 = f_holdingScore(s5_c, etf_c)
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+var table tbl = table.new(position.top_left, 4, 8,
+     bgcolor=color.new(color.black, 15),
+     border_width=1, border_color=color.new(color.gray, 50))
+
+f_shortName(sym) =>
+    str.contains(sym, ":") ? str.substring(sym, str.pos(sym, ":") + 1, str.length(sym)) : sym
+
+if barstate.islast
+    hdrBg = color.new(color.navy, 10)
+    table.cell(tbl, 0, 0, "HOLDING", bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 0, "SCORE",   bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 0, "RS/ETF",  bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 3, 0, "STATUS",  bgcolor=hdrBg, text_color=color.white, text_size=size.small)
+
+    // ETF vs SPY row
+    etfBg  = etf_spy > 0 ? color.new(color.teal, 65) : color.new(color.maroon, 65)
+    table.cell(tbl, 0, 1, f_shortName(sectorETF) + " vs SPY", bgcolor=etfBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 1, 1, "—",                                 bgcolor=etfBg, text_color=color.white, text_size=size.small)
+    table.cell(tbl, 2, 1, str.tostring(math.round(etf_spy, 2)) + "%", bgcolor=etfBg, text_color=etf_spy > 0 ? color.lime : color.red, text_size=size.small)
+    table.cell(tbl, 3, 1, etf_spy > 0 ? "LEADING" : "LAGGING", bgcolor=etfBg, text_color=etf_spy > 0 ? color.lime : color.red, text_size=size.small)
+
+    // Sort holdings by score
+    holdScores = array.from(float(sc1), float(sc2), float(sc3), float(sc4), float(sc5))
+    holdNames  = array.from(f_shortName(stock1), f_shortName(stock2), f_shortName(stock3), f_shortName(stock4), f_shortName(stock5))
+    holdRS     = array.from(rs1_etf, rs2_etf, rs3_etf, rs4_etf, rs5_etf)
+    sortedIdx  = array.sort_indices(holdScores, order.descending)
+
+    for i = 0 to 4
+        idx   = array.get(sortedIdx, i)
+        sc    = array.get(holdScores, idx)
+        nm    = array.get(holdNames,  idx)
+        rs    = array.get(holdRS,     idx)
+        row   = i + 2
+
+        rowBg    = sc >= 50 ? color.new(color.teal, 65) : color.new(color.maroon, 65)
+        rsColor  = not na(rs) and rs > 0 ? color.lime : color.red
+        rsTxt    = not na(rs) ? str.tostring(math.round(rs, 2)) + "%" : "n/a"
+        statTxt  = sc >= 60 ? "LEADER" : sc >= 40 ? "INLINE" : "LAGGARD"
+
+        table.cell(tbl, 0, row, nm,                             bgcolor=rowBg, text_color=color.white, text_size=size.small)
+        table.cell(tbl, 1, row, str.tostring(math.round(sc)),   bgcolor=rowBg, text_color=color.white, text_size=size.small)
+        table.cell(tbl, 2, row, rsTxt,                          bgcolor=rowBg, text_color=rsColor,     text_size=size.small)
+        table.cell(tbl, 3, row, statTxt,                        bgcolor=rowBg, text_color=rsColor,     text_size=size.small)

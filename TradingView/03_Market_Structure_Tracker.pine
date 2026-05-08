@@ -1,0 +1,133 @@
+//@version=5
+indicator("Market Structure Tracker", overlay=true, max_lines_count=200, max_labels_count=200)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+pivotLen     = input.int(5,    "Pivot Lookback",         minval=2, maxval=20)
+showLines    = input.bool(true, "Draw Structure Lines")
+showLabels   = input.bool(true, "Show HH/HL/LH/LL Labels")
+bullColor    = input.color(color.new(color.lime,   0), "Bullish Structure Color")
+bearColor    = input.color(color.new(color.red,    0), "Bearish Structure Color")
+neutralColor = input.color(color.new(color.orange, 0), "Neutral Color")
+
+// ── Pivot detection ───────────────────────────────────────────────────────────
+ph = ta.pivothigh(high, pivotLen, pivotLen)
+pl = ta.pivotlow(low,   pivotLen, pivotLen)
+
+// Track last two pivot highs and lows
+var float lastPH  = na
+var float prevPH  = na
+var int   lastPHi = na
+var int   prevPHi = na
+
+var float lastPL  = na
+var float prevPL  = na
+var int   lastPLi = na
+var int   prevPLi = na
+
+if not na(ph)
+    prevPH  := lastPH
+    prevPHi := lastPHi
+    lastPH  := ph
+    lastPHi := bar_index[pivotLen]
+
+if not na(pl)
+    prevPL  := lastPL
+    prevPLi := lastPLi
+    lastPL  := pl
+    lastPLi := bar_index[pivotLen]
+
+// ── Structure classification ──────────────────────────────────────────────────
+isHH = not na(lastPH) and not na(prevPH) and lastPH > prevPH
+isLH = not na(lastPH) and not na(prevPH) and lastPH < prevPH
+isHL = not na(lastPL) and not na(prevPL) and lastPL > prevPL
+isLL = not na(lastPL) and not na(prevPL) and lastPL < prevPL
+
+// Bullish: HH + HL  |  Bearish: LH + LL  |  Otherwise: transitioning
+var bool isBull    = false
+var bool isBear    = false
+var bool wasBull   = false
+var bool wasBear   = false
+
+wasBull := isBull
+wasBear := isBear
+
+if not na(ph)
+    if isHH
+        isBull := true
+        isBear := false
+    if isLH
+        isBull := false
+
+if not na(pl)
+    if isLL
+        isBear := true
+        isBull := false
+    if isHL
+        isBear := false
+
+// Structure flip signals
+flipToBull = isBull and not wasBull
+flipToBear = isBear and not wasBear
+
+// ── Draw structure lines between pivots ──────────────────────────────────────
+if showLines and not na(ph)
+    structColor = isHH ? bullColor : bearColor
+    if not na(prevPHi) and not na(lastPHi)
+        line.new(prevPHi, prevPH, lastPHi, lastPH,
+                 color=structColor, width=2, style=line.style_dashed)
+
+if showLines and not na(pl)
+    structColor = isHL ? bullColor : bearColor
+    if not na(prevPLi) and not na(lastPLi)
+        line.new(prevPLi, prevPL, lastPLi, lastPL,
+                 color=structColor, width=2, style=line.style_dashed)
+
+// ── Labels on new pivots ──────────────────────────────────────────────────────
+if showLabels and not na(ph)
+    phLabel   = isHH ? "HH" : "LH"
+    phColor   = isHH ? bullColor : bearColor
+    label.new(bar_index[pivotLen], high[pivotLen],
+              phLabel,
+              style=label.style_label_down,
+              color=phColor,
+              textcolor=color.black,
+              size=size.small)
+
+if showLabels and not na(pl)
+    plLabel   = isHL ? "HL" : "LL"
+    plColor   = isHL ? bullColor : bearColor
+    label.new(bar_index[pivotLen], low[pivotLen],
+              plLabel,
+              style=label.style_label_up,
+              color=plColor,
+              textcolor=color.black,
+              size=size.small)
+
+// ── Structure flip signals on chart ──────────────────────────────────────────
+plotshape(flipToBull, "Flip to Bullish", shape.triangleup,
+          location.belowbar, bullColor, size=size.normal)
+plotshape(flipToBear, "Flip to Bearish", shape.triangledown,
+          location.abovebar, bearColor, size=size.normal)
+
+// ── Background tint ───────────────────────────────────────────────────────────
+bgColor = isBull ? color.new(bullColor, 95) : isBear ? color.new(bearColor, 95) : color.new(neutralColor, 97)
+bgcolor(bgColor)
+
+// ── Status label ─────────────────────────────────────────────────────────────
+if barstate.islast
+    statusTxt   = isBull ? "BULLISH STRUCTURE\nHH + HL in place" :
+                  isBear ? "BEARISH STRUCTURE\nLH + LL in place" :
+                           "TRANSITIONING\nWaiting for confirmation"
+    statusColor = isBull ? bullColor : isBear ? bearColor : neutralColor
+    label.new(bar_index, high,
+              statusTxt,
+              style=label.style_label_left,
+              color=color.new(color.black, 20),
+              textcolor=statusColor,
+              size=size.normal)
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+alertcondition(flipToBull, "Structure Flip: Bullish", "{{ticker}} flipped to bullish structure (HH + HL confirmed)")
+alertcondition(flipToBear, "Structure Flip: Bearish", "{{ticker}} flipped to bearish structure (LH + LL confirmed)")
+alertcondition(isHH,       "Higher High formed",      "{{ticker}} printed a Higher High")
+alertcondition(isLL,       "Lower Low formed",        "{{ticker}} printed a Lower Low")

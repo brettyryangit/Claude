@@ -1,0 +1,69 @@
+//@version=5
+indicator("Ratio Chart Signals", overlay=false)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+symA     = input.symbol("AMEX:XLC", "Numerator Symbol (A)")
+symB     = input.symbol("AMEX:XLY", "Denominator Symbol (B)")
+emaFast  = input.int(10, "Fast EMA",   minval=2)
+emaSlow  = input.int(30, "Slow EMA",   minval=5)
+showFill = input.bool(true, "Show Fill Between EMAs")
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+closeA = request.security(symA, timeframe.period, close)
+closeB = request.security(symB, timeframe.period, close)
+
+ratio  = closeB > 0 ? closeA / closeB : na
+
+// ── Trend calculations ────────────────────────────────────────────────────────
+fastEMA  = ta.ema(ratio, emaFast)
+slowEMA  = ta.ema(ratio, emaSlow)
+rsiVal   = ta.rsi(ratio, 14)
+
+// Momentum: ratio rate of change over 10 bars
+ratioROC = ta.roc(ratio, 10)
+
+// Trend state
+bullTrend  = fastEMA > slowEMA
+crossUp    = ta.crossover(fastEMA,  slowEMA)
+crossDown  = ta.crossunder(fastEMA, slowEMA)
+
+// ── Plots ─────────────────────────────────────────────────────────────────────
+ratioColor = bullTrend ? color.new(color.lime, 20) : color.new(color.red, 20)
+p1 = plot(ratio,   "Ratio A/B",  color=ratioColor, linewidth=2)
+p2 = plot(fastEMA, "Fast EMA",   color=color.new(color.yellow, 0), linewidth=1)
+p3 = plot(slowEMA, "Slow EMA",   color=color.new(color.orange, 0), linewidth=1)
+
+fillColor = bullTrend ? color.new(color.lime, 88) : color.new(color.red, 88)
+fill(p2, p3, color=showFill ? fillColor : na)
+
+// Crossover signals
+plotshape(crossUp,   "Ratio Cross Up",   shape.triangleup,   location.bottom, color.lime,   size=size.small)
+plotshape(crossDown, "Ratio Cross Down", shape.triangledown, location.top,    color.red,    size=size.small)
+
+// ── RSI subplot (momentum of the ratio) ──────────────────────────────────────
+// Displayed as a separate pane element via hline + plot
+hline(70, "Overbought", color=color.new(color.red,    50), linestyle=hline.style_dashed)
+hline(50, "Midline",    color=color.new(color.gray,   50), linestyle=hline.style_dotted)
+hline(30, "Oversold",   color=color.new(color.green,  50), linestyle=hline.style_dashed)
+
+// ── Info label ────────────────────────────────────────────────────────────────
+if barstate.islast
+    symAShort = str.contains(symA, ":") ? str.substring(symA, str.pos(symA, ":") + 1, str.length(symA)) : symA
+    symBShort = str.contains(symB, ":") ? str.substring(symB, str.pos(symB, ":") + 1, str.length(symB)) : symB
+    infoTxt   = symAShort + "/" + symBShort + "\n" +
+                "Ratio: " + str.tostring(math.round(ratio, 4)) + "\n" +
+                "ROC: "   + str.tostring(math.round(ratioROC, 2)) + "%\n" +
+                (bullTrend ? "FAVORING " + symAShort : "FAVORING " + symBShort)
+    lblColor  = bullTrend ? color.lime : color.red
+    label.new(bar_index, ratio,
+              infoTxt,
+              style=label.style_label_left,
+              color=color.new(color.black, 20),
+              textcolor=lblColor,
+              size=size.normal)
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+alertcondition(crossUp,   "Ratio Bullish Crossover", "{{ticker}}: Ratio A/B EMA crossover — A gaining strength vs B")
+alertcondition(crossDown, "Ratio Bearish Crossover", "{{ticker}}: Ratio A/B EMA crossunder — B gaining strength vs A")
+alertcondition(ratioROC > 5,  "Ratio Accelerating Up",   "Ratio accelerating upward (ROC > 5%)")
+alertcondition(ratioROC < -5, "Ratio Accelerating Down",  "Ratio accelerating downward (ROC < -5%)")
