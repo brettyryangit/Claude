@@ -1,0 +1,114 @@
+//@version=5
+indicator(title="RSI Divergence", shorttitle="RSI Div", overlay=false, max_lines_count=500, max_labels_count=500)
+
+// ─── Inputs ───────────────────────────────────────────────────────────────────
+rsiLen      = input.int(14,    "RSI Length",         minval=1)
+rsiSrc      = input.source(close, "RSI Source")
+pivotLB     = input.int(5,     "Pivot Lookback",     minval=2, maxval=20,
+                tooltip="Bars left/right required to confirm a swing high/low")
+lookback    = input.int(60,    "Divergence Lookback (bars)", minval=10, maxval=300)
+showBull    = input.bool(true, "Show Bullish Divergence")
+showBear    = input.bool(true, "Show Bearish Divergence")
+showHidden  = input.bool(false,"Show Hidden Divergences",
+                tooltip="Hidden Bull: price higher low, RSI lower low. Hidden Bear: price lower high, RSI higher high.")
+
+bullColor   = input.color(color.new(#00c853, 0),  "Bullish Color")
+bearColor   = input.color(color.new(#d50000, 0),  "Bearish Color")
+hidBullClr  = input.color(color.new(#00acc1, 0),  "Hidden Bull Color")
+hidBearClr  = input.color(color.new(#ff6d00, 0),  "Hidden Bear Color")
+
+obLevel     = input.int(70, "Overbought Level", minval=50, maxval=100)
+osLevel     = input.int(30, "Oversold Level",   minval=0,  maxval=50)
+
+// ─── RSI ──────────────────────────────────────────────────────────────────────
+rsi = ta.rsi(rsiSrc, rsiLen)
+
+// ─── Pivot Detection ──────────────────────────────────────────────────────────
+pivotHigh = ta.pivothigh(rsi,  pivotLB, pivotLB)
+pivotLow  = ta.pivotlow(rsi,   pivotLB, pivotLB)
+
+pricePH   = ta.pivothigh(high, pivotLB, pivotLB)
+pricePL   = ta.pivotlow(low,   pivotLB, pivotLB)
+
+// ─── Divergence Logic ─────────────────────────────────────────────────────────
+// We look back from each confirmed pivot to find the previous same-type pivot,
+// then compare price and RSI direction.
+
+findPrevPivotLow(startBar) =>
+    found = -1
+    for i = startBar + 1 to startBar + lookback
+        if not na(pivotLow[i])
+            found := i
+            break
+    found
+
+findPrevPivotHigh(startBar) =>
+    found = -1
+    for i = startBar + 1 to startBar + lookback
+        if not na(pivotHigh[i])
+            found := i
+            break
+    found
+
+// ─── Draw lines and labels ────────────────────────────────────────────────────
+// Called on each bar where a pivot is confirmed (pivotLB bars ago).
+
+// Bullish divergence: price makes lower low, RSI makes higher low
+if not na(pivotLow) and showBull
+    prev = findPrevPivotLow(0)
+    if prev != -1
+        curRsi   = rsi[pivotLB]
+        prevRsi  = rsi[pivotLB + prev]
+        curPrice = low[pivotLB]
+        prevPrice= low[pivotLB + prev]
+
+        isBullDiv       = curPrice < prevPrice and curRsi > prevRsi
+        isHidBullDiv    = curPrice > prevPrice and curRsi < prevRsi
+
+        if isBullDiv
+            x1 = bar_index[pivotLB + prev]
+            x2 = bar_index[pivotLB]
+            line.new(x1, prevRsi, x2, curRsi, color=bullColor, width=2)
+            label.new(x2, curRsi, "Bull", color=bullColor,
+                      textcolor=color.white, style=label.style_label_up, size=size.small)
+
+        if isHidBullDiv and showHidden
+            x1 = bar_index[pivotLB + prev]
+            x2 = bar_index[pivotLB]
+            line.new(x1, prevRsi, x2, curRsi, color=hidBullClr, width=1, style=line.style_dashed)
+            label.new(x2, curRsi, "H.Bull", color=hidBullClr,
+                      textcolor=color.white, style=label.style_label_up, size=size.small)
+
+// Bearish divergence: price makes higher high, RSI makes lower high
+if not na(pivotHigh) and showBear
+    prev = findPrevPivotHigh(0)
+    if prev != -1
+        curRsi   = rsi[pivotLB]
+        prevRsi  = rsi[pivotLB + prev]
+        curPrice = high[pivotLB]
+        prevPrice= high[pivotLB + prev]
+
+        isBearDiv       = curPrice > prevPrice and curRsi < prevRsi
+        isHidBearDiv    = curPrice < prevPrice and curRsi > prevRsi
+
+        if isBearDiv
+            x1 = bar_index[pivotLB + prev]
+            x2 = bar_index[pivotLB]
+            line.new(x1, prevRsi, x2, curRsi, color=bearColor, width=2)
+            label.new(x2, curRsi, "Bear", color=bearColor,
+                      textcolor=color.white, style=label.style_label_down, size=size.small)
+
+        if isHidBearDiv and showHidden
+            x1 = bar_index[pivotLB + prev]
+            x2 = bar_index[pivotLB]
+            line.new(x1, prevRsi, x2, curRsi, color=hidBearClr, width=1, style=line.style_dashed)
+            label.new(x2, curRsi, "H.Bear", color=hidBearClr,
+                      textcolor=color.white, style=label.style_label_down, size=size.small)
+
+// ─── RSI Plot ─────────────────────────────────────────────────────────────────
+rsiPlot = plot(rsi, "RSI", color=color.new(color.purple, 0), linewidth=2)
+obLine  = hline(obLevel, "Overbought", color=color.new(color.red,   50), linestyle=hline.style_dashed)
+midLine = hline(50,      "Midline",    color=color.new(color.gray,  60), linestyle=hline.style_dotted)
+osLine  = hline(osLevel, "Oversold",   color=color.new(color.green, 50), linestyle=hline.style_dashed)
+fill(obLine, midLine, color=color.new(color.red,   92))
+fill(osLine, midLine, color=color.new(color.green, 92))
