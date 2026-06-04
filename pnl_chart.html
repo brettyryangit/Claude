@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading PNL Chart</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d0d0d; color: #fff; font-family: 'Segoe UI', sans-serif; padding: 32px; }
+  h1 { font-size: 22px; font-weight: 600; color: #e0e0e0; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+
+  .stats-row {
+    display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .stat-card {
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px;
+    padding: 16px 24px; min-width: 150px;
+  }
+  .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .green { color: #26d97f; }
+  .red { color: #ff4d4d; }
+  .white { color: #fff; }
+
+  .chart-container {
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px;
+    margin-bottom: 24px;
+  }
+  .chart-title { font-size: 14px; color: #aaa; margin-bottom: 16px; font-weight: 500; }
+
+  .weekly-table {
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px;
+    margin-top: 24px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 8px 12px; color: #666; font-weight: 500; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #2a2a2a; }
+  td { padding: 10px 12px; border-bottom: 1px solid #1e1e1e; }
+  tr:last-child td { border-bottom: none; }
+  .pos { color: #26d97f; font-weight: 600; }
+  .neg { color: #ff4d4d; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>Trading Performance</h1>
+<p class="subtitle">May 11 – June 4, 2026</p>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Total PNL</div>
+    <div class="stat-value green">$9,231.94</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Trading Days</div>
+    <div class="stat-value white">19</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Best Day</div>
+    <div class="stat-value green">$2,210.64</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Worst Day</div>
+    <div class="stat-value red">-$1,748.88</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Win Days</div>
+    <div class="stat-value green">17 / 19</div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Daily PNL + Cumulative PNL</div>
+  <canvas id="dailyChart" height="100"></canvas>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Weekly PNL Summary</div>
+  <canvas id="weeklyChart" height="60"></canvas>
+</div>
+
+<div class="weekly-table">
+  <div class="chart-title">Weekly Breakdown</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Dates</th>
+        <th>PNL</th>
+        <th>Trades</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Week 1</td><td>Apr 28 – May 2</td><td class="pos">$0.00</td><td>0</td>
+      </tr>
+      <tr>
+        <td>Week 2</td><td>May 5 – May 9</td><td class="pos">$0.00</td><td>0</td>
+      </tr>
+      <tr>
+        <td>Week 3</td><td>May 11 – May 15</td><td class="pos">$3,933.28</td><td>42</td>
+      </tr>
+      <tr>
+        <td>Week 4</td><td>May 18 – May 22</td><td class="neg">-$457.08</td><td>~37</td>
+      </tr>
+      <tr>
+        <td>Week 5</td><td>May 25 – May 29</td><td class="pos">$1,088.04</td><td>~25</td>
+      </tr>
+      <tr>
+        <td>Week 6</td><td>Jun 1 – Jun 4</td><td class="pos">$4,667.70</td><td>27</td>
+      </tr>
+      <tr style="background:#111;">
+        <td><strong>Total</strong></td><td></td><td class="pos"><strong>$9,231.94</strong></td><td><strong>~131</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const days = [
+  'May 11','May 12','May 13','May 14','May 15',
+  'May 18','May 19','May 20','May 21','May 22',
+  'May 25','May 26','May 27','May 28','May 29',
+  'Jun 1','Jun 2','Jun 3','Jun 4'
+];
+
+const daily = [
+  206.96, 2210.64, 767.68, 559.54, 188.46,
+  273.78, 1280.44, 19.44, -1748.88, -281.86,
+  108.76, 185.38, 146.80, 127.10, 520.00,
+  562.38, 806.94, 2049.28, 1249.10
+];
+
+const cumulative = daily.reduce((acc, v, i) => {
+  acc.push((acc[i - 1] || 0) + v);
+  return acc;
+}, []);
+
+const barColors = daily.map(v => v >= 0 ? 'rgba(38,217,127,0.75)' : 'rgba(255,77,77,0.75)');
+const barBorder = daily.map(v => v >= 0 ? '#26d97f' : '#ff4d4d');
+
+new Chart(document.getElementById('dailyChart'), {
+  data: {
+    labels: days,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Daily PNL',
+        data: daily,
+        backgroundColor: barColors,
+        borderColor: barBorder,
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'line',
+        label: 'Cumulative PNL',
+        data: cumulative,
+        borderColor: '#f0c040',
+        backgroundColor: 'rgba(240,192,64,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointBackgroundColor: '#f0c040',
+        tension: 0.3,
+        fill: true,
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        labels: { color: '#aaa', font: { size: 12 } }
+      },
+      tooltip: {
+        backgroundColor: '#222',
+        titleColor: '#ccc',
+        bodyColor: '#eee',
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#777', font: { size: 11 } },
+        grid: { color: '#1e1e1e' }
+      },
+      y: {
+        position: 'left',
+        ticks: {
+          color: '#777', font: { size: 11 },
+          callback: v => '$' + v.toLocaleString()
+        },
+        grid: { color: '#1e1e1e' }
+      },
+      y2: {
+        position: 'right',
+        ticks: {
+          color: '#f0c040', font: { size: 11 },
+          callback: v => '$' + v.toLocaleString()
+        },
+        grid: { drawOnChartArea: false }
+      }
+    }
+  }
+});
+
+const weeks = ['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6'];
+const weeklyPNL = [0, 0, 3933.28, -457.08, 1088.04, 4667.70];
+const wColors = weeklyPNL.map(v => v >= 0 ? 'rgba(38,217,127,0.75)' : 'rgba(255,77,77,0.75)');
+const wBorder = weeklyPNL.map(v => v >= 0 ? '#26d97f' : '#ff4d4d');
+
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'bar',
+  data: {
+    labels: weeks,
+    datasets: [{
+      label: 'Weekly PNL',
+      data: weeklyPNL,
+      backgroundColor: wColors,
+      borderColor: wBorder,
+      borderWidth: 1,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#222',
+        titleColor: '#ccc',
+        bodyColor: '#eee',
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.y.toLocaleString('en-US', {minimumFractionDigits:2})}`
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#777' }, grid: { color: '#1e1e1e' } },
+      y: {
+        ticks: { color: '#777', callback: v => '$' + v.toLocaleString() },
+        grid: { color: '#1e1e1e' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
