@@ -14,6 +14,7 @@
 2. Elite Trainer Philosophies — What the World's Best Do
 3. The Complete Phase-by-Phase Training Plan (14–16 Weeks)
 4. Nutrition & Feeding Program
+4A. Ergogenic Aids — What's Safe, Legal & Effective
 5. Recovery Protocols
 6. Veterinary & Health Management
 7. Mental Conditioning & Psychology
@@ -493,6 +494,72 @@ All supplements must either hold APVMA registration or be exempt from registrati
 
 ---
 
+## PART 4A: ERGOGENIC AIDS — WHAT'S SAFE, LEGAL & EFFECTIVE
+
+> **The single most important principle:** Australian racing operates on a **"drug-free racing"** model with **strict liability**. If a prohibited substance is detected in a raceday sample, the horse is disqualified and the trainer is penalised — **regardless of how it got there or whether the trainer intended it.** The trap is not just deliberate doping; it is innocent supplementation with common tonics that push a substance over its threshold. Read Section 4A.4 carefully — it is where well-meaning trainers get caught.
+
+### 4A.1 The Honest Truth About "Performance Supplements"
+
+Most of what the human sports-supplement industry sells does **not** transfer to horses, because a horse's digestive physiology (herbivore hindgut fermenter) absorbs many compounds very differently. The headline example is **creatine** — the world's most-used human ergogenic — which is **legal but essentially useless in horses**: when fed at human-equivalent or higher doses, plasma levels rise only modestly and **muscle creatine concentration does not change**, so there is no performance benefit. Horses simply don't absorb oral creatine into muscle the way humans do. (Sewell et al., 1995; Kentucky Equine Research.)
+
+The realistic goal is not a "magic" supplement. It is: **fix deficiencies, support recovery, buffer fatigue, and stay the right side of the rules.** A correctly fed, correctly trained, well-rested horse beats a supplemented but over-trained one every time.
+
+### 4A.2 SAFE, LEGAL & EFFECTIVE (Evidence-Backed — Worth Using)
+
+| Supplement | What It Does | Evidence | Notes |
+|---|---|---|---|
+| **Beta-alanine** | Raises muscle **carnosine**, which buffers lactic acid build-up during high-intensity sprint efforts — the closest legitimate equine equivalent to what people wrongly hope creatine will do | Studies show ~13% increase in muscle carnosine; a 2024 speed-racing trial showed ~12% improvement over 1,000m | The most promising legal "performance" aid for 1,200–1,400m sprinters; not currently a prohibited substance, but verify against the current schedule |
+| **Electrolytes** (Na, Cl, K, Mg, Ca) | Replace sweat losses; prevent dehydration and tying-up; maintain muscle function | Long established and essential | 2–3×/week in work; always post-race. Plain electrolytes are permitted |
+| **Vitamin E** | Primary fat-soluble antioxidant; reduces exercise-induced oxidative muscle damage; aids recovery | Strong; especially valuable for tying-up-prone horses | 1,000–3,000 IU/day in hard work |
+| **Selenium** | Antioxidant working synergistically with Vitamin E; muscle integrity | Strong — Australian soils are widely selenium-deficient | **Do not exceed ~3 mg/day total** from all sources — toxic above that |
+| **Omega-3 fatty acids** | Anti-inflammatory; supports healthy respiratory (airway) and immune response; coat | Good; relevant to horses with mild EIPH or airway inflammation | Ground flaxseed/linseed or stabilised fish oil, daily |
+| **CoQ10 (Coenzyme Q10)** | Mitochondrial ATP production | Thoroughbred plasma CoQ10 drops after intense work; supplementation supports ATP adaptation | Useful during peak campaigns |
+| **Joint support** (Glucosamine, Chondroitin, MSM) | Cartilage health; joint fluid viscosity | Reasonable long-term evidence under sustained training loads | Daily from 3yo onward |
+| **Quality protein / amino acids** (lysine, methionine, threonine) | Muscle repair and topline development | Well established — limiting amino acids cap muscle building | Especially important for young horses building frame |
+| **Gut/hindgut buffers & probiotics** (non-bicarbonate) | Support hindgut pH and microbiome on high-grain diets; reduce ulcer/colic risk | Reasonable | Distinct from prohibited bicarbonate loading — these are feed-grade digestive aids |
+
+### 4A.3 LEGAL BUT INEFFECTIVE / OVERHYPED (Save Your Money)
+
+| Product | Why It Disappoints |
+|---|---|
+| **Creatine** | Not absorbed into equine muscle — no ergogenic effect despite being legal (see 4A.1) |
+| **L-carnitine (oral)** | Poor oral bioavailability in horses; little measurable benefit |
+| **DMG (dimethylglycine)** | Heavily marketed, thin evidence for performance |
+| **Gamma oryzanol** | Marketed as a "natural muscle builder"; weak evidence |
+| **Most "blood builder" tonics** | See 4A.4 — not only weak evidence, but a major **doping-positive risk** |
+
+### 4A.4 PROHIBITED — WILL GET YOU SWABBED, FINED & DISQUALIFIED
+
+This is the section that protects your licence. Several of these are sold as ordinary "tonics" or "supplements" — innocence is not a defence under strict liability.
+
+| Substance / Method | Australian Rule / Threshold | The Trap |
+|---|---|---|
+| **Sodium bicarbonate loading ("milkshaking")** | TCO2 (total CO₂) action limit **37.0 mmol/L** in blood | The proven acid-buffer, but actively tested on raceday via TCO2 testing. Bicarbonate pastes and large oral baking-soda doses are prohibited. Use **beta-alanine** instead for legal acid buffering |
+| **Cobalt** | Prohibited above **100 µg/L urine** or **25 µg/L blood** | **The big innocent trap.** Common supplements containing cobalt include **VAM, Tripart, Tri-Cal, Electropaste, Availa-4, and Vitamin B-Complex** preparations. Routine use of these "blood/vitamin tonics" can breach the threshold. Read every label |
+| **Arsenic** (in "jugging" tonics) | Prohibited above **0.30 µg/mL urine** | Found in injectable tonics such as **Ferrocyl, Jurocyl, and Invigorate**, marketed to "improve appetite, coat, or treat anaemia." No evidence-based justification; high positive-test risk |
+| **EPO & blood doping / transfusions** | Banned outright | Blood-building manipulation is a serious doping offence |
+| **Anabolic steroids** | Banned outright (zero tolerance for non-permitted agents) | Even during spelling/out of competition — Australia has out-of-competition testing |
+| **Diuretics (e.g. Lasix/furosemide)** | Prohibited on raceday in Australia | Unlike the USA, Australia does **not** permit raceday Lasix for EIPH. Manage bleeders through training, not raceday drugs |
+| **Anti-inflammatories** (bute, flunixin, meloxicam) | Permitted to **treat**, but prohibited on raceday with mandatory withdrawal | Must clear the system before racing — observe withdrawal times |
+| **Herbal "calmers"** containing valerian or reserpine | Prohibited substances | Marketed as natural/harmless; both are on the prohibited list |
+| **Caffeine / theobromine** | Prohibited | Can appear via contaminated feed (cocoa, coffee residue) — feed hygiene matters |
+
+### 4A.5 Practical Rules for Staying Safe
+
+1. **Read every label for cobalt, arsenic, and caffeine sources** — especially anything marketed as a "blood builder," "vitamin tonic," "B-complex," or "appetite/coat tonic." These are the most common cause of innocent positives in Australia.
+2. **Get a written prohibited-substance declaration** from the manufacturer of any supplement before use.
+3. **Prefer single-ingredient, feed-grade supplements** (e.g. straight electrolytes, straight vitamin E) over complex "all-in-one" injectable or paste tonics where you can't see the full composition.
+4. **Keep a treatment and supplement log** — substance, dose, date, batch number. This is your defence in a stewards inquiry and is expected under the TRWP.
+5. **Observe all withdrawal periods**, including the **8-clear-day rule for any intra-articular (joint) injection** before a race, trial, or jump-out.
+6. **Out-of-competition testing exists** — anabolic agents and similar are banned even during a spell, not just on raceday.
+7. **When in doubt, don't.** A clean horse that runs fourth keeps your licence; a "tonic" positive can end a training career.
+
+### 4A.6 The Bottom Line for Getting the Best Out of Your Horse
+
+The biggest legal performance gains are not in a bucket of supplements — they are in **correct conditioning, genuine recovery, ulcer prevention, dental and hoof maintenance, and a calm, well-fed, well-rested horse.** Layer onto that a **deficiency-corrected diet** (vitamin E, selenium, electrolytes, omega-3, quality protein) and, for sprinters, consider **beta-alanine** as the one legitimate buffering aid with real sprint-distance evidence. Everything else is either money wasted or a risk to your licence.
+
+---
+
 ## PART 5: RECOVERY PROTOCOLS
 
 ### 5.1 Immediate Post-Work Recovery (After Every Gallop Session)
@@ -908,6 +975,15 @@ Enables early identification of overtraining (progressive performance decline wi
 - [Equine Consulting Services Australia — Racehorse Nutrition](https://www.equineconsultingservices.com.au/post/racehorse-nutrition-what-s-actually-needed)
 - [Mad Barn — Feeding High Performance Horses](https://madbarn.com/feeding-high-performance-horses/)
 - [Rutgers Equine Science Center — Feeding Horses for Competitions](https://esc.rutgers.edu/fact_sheet/feeding-horses-for-competitions-from-racing-to-dressage/)
+
+**Ergogenic Aids & Prohibited Substances:**
+- [Kentucky Equine Research — Creatine Supplements in Horses](https://ker.com/equinews/creatine-supplements-horses/)
+- [Sewell et al. (1995) — Effects of Creatine Supplementation in the Thoroughbred Horse — Equine Veterinary Journal](https://beva.onlinelibrary.wiley.com/doi/abs/10.1111/j.2042-3306.1995.tb04928.x)
+- [β-alanine and athletic performance in speed-racing horses (2024) — PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC10932971/)
+- [Beta-alanine & L-histidine on gluteus medius carnosine — PubMed](https://pubmed.ncbi.nlm.nih.gov/10659307/)
+- [Kentucky Equine Research — Prohibited Substances, Feed, and the Performance Horse](https://ker.com/equinews/prohibited-substances-feed-and-the-performance-horse/)
+- [Racing Australia — Cobalt Threshold Notice (Racing NSW PDF)](https://www.racingnsw.com.au/wp-content/uploads/Notice-Cobalt-Threshold-in-the-Australian-Rules-of-Racing.pdf)
+- [Racing Victoria — Doping Control](https://www.racingvictoria.com.au/the-horse/veterinary-care/doping-control)
 
 **Recovery & Veterinary:**
 - [Kentucky Equine Research — Water Treadmills Aid Rehabilitation](https://ker.com/equinews/water-treadmills-aid-rehabilitation-injured-horses/)
