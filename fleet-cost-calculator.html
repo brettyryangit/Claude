@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bali Scooter Fleet Cost &amp; Returns Calculator</title>
+<style>
+  :root{ --green:#0b3d2e; --green2:#14563f; --line:#c4d3cc; --bg:#f2f7f4; }
+  *{ box-sizing:border-box; }
+  body{ font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:#1a1a1a; margin:0; background:#eef2f0; }
+  header{ background:var(--green); color:#fff; padding:18px 22px; }
+  header h1{ margin:0; font-size:20px; }
+  header p{ margin:4px 0 0; font-size:13px; opacity:.9; }
+  .wrap{ max-width:1100px; margin:0 auto; padding:18px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:18px; }
+  h2{ color:var(--green); font-size:16px; border-bottom:2px solid var(--green); padding-bottom:6px; margin:0 0 12px; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th{ background:var(--green); color:#fff; text-align:left; padding:7px 8px; font-size:12px; }
+  td{ border:1px solid var(--line); padding:5px 8px; }
+  tr:nth-child(even) td{ background:var(--bg); }
+  .num{ text-align:right; white-space:nowrap; }
+  input[type=number]{ width:62px; padding:4px; border:1px solid #aaa; border-radius:4px; text-align:right; font-size:13px; }
+  .assump input{ width:90px; }
+  .assump label{ display:inline-block; }
+  .assump .row{ display:flex; flex-wrap:wrap; gap:14px; }
+  .assump .f{ display:flex; flex-direction:column; font-size:12px; gap:3px; min-width:150px; }
+  .presets button, .actions button{ background:var(--green2); color:#fff; border:0; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; margin:0 6px 6px 0; }
+  .presets button:hover, .actions button:hover{ background:var(--green); }
+  .out{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .kpi{ background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .kpi .v{ font-size:21px; font-weight:700; color:var(--green); }
+  .kpi .l{ font-size:11.5px; color:#555; margin-top:2px; }
+  .kpi .s{ font-size:11px; color:#888; }
+  .pl td:first-child{ font-weight:500; }
+  .pl .tot td{ font-weight:700; background:#dceae3; }
+  .note{ background:#fbf7e8; border-left:4px solid #c9a227; padding:8px 12px; font-size:12px; margin-top:12px; border-radius:4px; }
+  .neg{ color:#b00020; }
+  .footer{ font-size:11px; color:#777; padding:8px 18px 24px; max-width:1100px; margin:0 auto; }
+  @media print{ .presets,.actions,header{ } input{ border:0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bali Scooter Rental — Fleet Cost &amp; Returns Calculator</h1>
+  <p>Denpasar OTR 2026 pricing · Realistic-scenario assumptions · enter quantities and edit assumptions to model any fleet mix</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card presets">
+    <strong style="font-size:13px;">Quick presets:</strong><br>
+    <button onclick="preset('rec50')">Recommended 50 (70% new / 30% used)</button>
+    <button onclick="preset('rec25')">Phased 25 launch</button>
+    <button onclick="preset('budget')">Budget standard fleet</button>
+    <button onclick="preset('premium')">Premium-heavy fleet</button>
+    <button onclick="preset('clear')">Clear all</button>
+  </div>
+
+  <div class="card">
+    <h2>1. Choose your fleet (enter quantity new &amp; used per model)</h2>
+    <table id="fleet">
+      <thead>
+        <tr>
+          <th>Model</th><th>Class</th>
+          <th class="num">New OTR (M)</th><th class="num">Used 1yr (M)</th>
+          <th class="num">Qty NEW</th><th class="num">Qty USED</th>
+          <th class="num">Subtotal (M)</th>
+        </tr>
+      </thead>
+      <tbody><!-- rows injected --></tbody>
+      <tfoot>
+        <tr class="tot" style="font-weight:700;background:#dceae3;">
+          <td colspan="4">TOTAL UNITS / FLEET CAPEX (vehicles only)</td>
+          <td class="num" id="tNew">0</td><td class="num" id="tUsed">0</td>
+          <td class="num" id="tCapex">0</td>
+        </tr>
+      </tfoot>
+    </table>
+    <p class="note">Prices are 2026 Denpasar on-the-road (OTR = incl. BBN tax &amp; registration). Used = typical 1-year-old Bali second-hand price. Bulk fleet orders often negotiate ~3–7% below new sticker — apply via the discount field below.</p>
+  </div>
+
+  <div class="card assump">
+    <h2>2. Assumptions (edit any value)</h2>
+    <div class="row">
+      <div class="f"><label>FX: USD = IDR</label><input type="number" id="fx" value="16300" step="50"></div>
+      <div class="f"><label>New-bike bulk discount (%)</label><input type="number" id="disc" value="5" step="1"></div>
+      <div class="f"><label>Per-unit kit: GPS/helmets/box (M)</label><input type="number" id="kit" value="1.1" step="0.1"></div>
+      <div class="f"><label>Occupancy (% of base 78%)</label><input type="number" id="occ" value="100" step="1"></div>
+      <div class="f"><label>Insurance / unit / yr (M) — blended</label><input type="number" id="ins" value="0.8" step="0.1"></div>
+      <div class="f"><label>Tax+tracker / unit / yr (M)</label><input type="number" id="tax" value="0.45" step="0.05"></div>
+      <div class="f"><label>Ops fuel / unit / yr (M)</label><input type="number" id="fuel" value="0.2" step="0.05"></div>
+      <div class="f"><label>Overhead base (M/yr)</label><input type="number" id="ohBase" value="120" step="10"></div>
+      <div class="f"><label>Overhead per unit (M/yr)</label><input type="number" id="ohUnit" value="18" step="1"></div>
+      <div class="f"><label>Working capital (months opex)</label><input type="number" id="wc" value="3" step="1"></div>
+      <div class="f"><label>Setup: PT PMA+legal+fitout (M)</label><input type="number" id="setup" value="230" step="10"></div>
+      <div class="f"><label>Tax rate on profit (%)</label><input type="number" id="ctax" value="20" step="1"></div>
+    </div>
+    <p class="note">Revenue &amp; maintenance per model are class-based (Realistic scenario): Standard rev 30M / maint 2.5M · Premium rev 34M / maint 3.1M · Maxi rev 38M / maint 3.6M, each per scooter/yr at 78% occupancy. The occupancy field scales revenue (e.g. 85 ≈ optimistic, 66 ≈ conservative — enter as % of the 78% base, so 109 ≈ 85% actual, 85 ≈ 66% actual).</p>
+  </div>
+
+  <div class="card">
+    <h2>3. Results</h2>
+    <div class="out" id="kpis"></div>
+    <h2 style="margin-top:18px;">Annual P&amp;L (steady state)</h2>
+    <table class="pl">
+      <tbody id="pl"></tbody>
+    </table>
+    <div class="actions" style="margin-top:12px;">
+      <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+</div>
+<div class="footer">
+  Indicative planning tool — figures are modelled estimates on stated assumptions, not quotes. Conduct due diligence and obtain professional legal, tax &amp; insurance advice before investing. Pricing basis: 2026 Denpasar dealer OTR listings (Zigwheels/Oto/Yamaha Bali).
+</div>
+
+<script>
+// model data: [name, class, newPrice(M), usedPrice(M)]
+// class drives revenue & maintenance
+const MODELS = [
+  ["Honda Beat 110","entry",18.4,11.0],
+  ["Honda Scoopy 110","standard",23.3,14.5],
+  ["Yamaha Fazzio 125","standard",22.5,15.0],
+  ["Honda Vario 125","standard",25.5,15.0],
+  ["Honda Vario 160","premium",28.0,19.0],
+  ["Yamaha Lexi LX 155","premium",28.0,19.0],
+  ["Yamaha Aerox 155","premium",29.5,19.0],
+  ["Yamaha NMAX 155","maxi",31.5,21.0],
+  ["Honda PCX 160","maxi",35.5,25.0],
+  ["Yamaha NMAX Turbo","maxi",35.0,24.0],
+];
+// class economics (per scooter/yr, M IDR, at 78% occupancy)
+const CLASS = {
+  entry:    {rev:28, maint:2.4, ins:0.6, depNew:2.6, depUsed:2.1},
+  standard: {rev:30, maint:2.5, ins:0.6, depNew:2.9, depUsed:2.2},
+  premium:  {rev:34, maint:3.1, ins:0.9, depNew:3.6, depUsed:2.7},
+  maxi:     {rev:38, maint:3.6, ins:1.2, depNew:4.3, depUsed:3.2},
+};
+
+const tbody = document.querySelector('#fleet tbody');
+MODELS.forEach((m,i)=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${m[0]}</td><td>${m[1]}</td>
+    <td class="num">${m[2].toFixed(1)}</td><td class="num">${m[3].toFixed(1)}</td>
+    <td class="num"><input type="number" min="0" value="0" id="n${i}" oninput="calc()"></td>
+    <td class="num"><input type="number" min="0" value="0" id="u${i}" oninput="calc()"></td>
+    <td class="num" id="sub${i}">0</td>`;
+  tbody.appendChild(tr);
+});
+
+const $=id=>document.getElementById(id);
+const fmtM=v=>(v).toLocaleString('en-US',{maximumFractionDigits:1});
+const fmtUSD=v=>'$'+(v).toLocaleString('en-US',{maximumFractionDigits:0});
+
+function preset(p){
+  MODELS.forEach((m,i)=>{ $('n'+i).value=0; $('u'+i).value=0; });
+  const set=(name,n,u)=>{ const i=MODELS.findIndex(m=>m[0]===name); if(i>=0){$('n'+i).value=n;$('u'+i).value=u;} };
+  if(p==='rec50'){ set("Honda Vario 125",12,6); set("Honda Scoopy 110",8,4); set("Yamaha Fazzio 125",3,2); set("Yamaha NMAX 155",8,0); set("Honda PCX 160",4,0); set("Honda Vario 160",3,0); }
+  if(p==='rec25'){ set("Honda Vario 125",7,3); set("Honda Scoopy 110",4,2); set("Yamaha NMAX 155",5,0); set("Honda PCX 160",2,0); set("Yamaha Fazzio 125",2,0); }
+  if(p==='budget'){ set("Honda Scoopy 110",10,8); set("Honda Vario 125",10,8); set("Honda Beat 110",4,10); }
+  if(p==='premium'){ set("Yamaha NMAX 155",18,0); set("Honda PCX 160",14,0); set("Honda Vario 160",10,0); set("Honda Vario 125",8,0); }
+  calc();
+}
+
+function calc(){
+  const fx=+$('fx').value||16300, disc=(+$('disc').value||0)/100, kit=+$('kit').value||0;
+  const occF=(+$('occ').value||100)/100, insI=$('ins').value, taxU=+$('tax').value||0, fuelU=+$('fuel').value||0;
+  const ohBase=+$('ohBase').value||0, ohUnit=+$('ohUnit').value||0, wcM=+$('wc').value||0, setup=+$('setup').value||0, ctax=(+$('ctax').value||0)/100;
+
+  let units=0, nNew=0, nUsed=0, capexVeh=0, rev=0, maint=0, insSum=0, dep=0;
+  MODELS.forEach((m,i)=>{
+    const n=+$('n'+i).value||0, u=+$('u'+i).value||0;
+    const c=CLASS[m[1]];
+    const subN=n*m[2]*(1-disc), subU=u*m[3];
+    const sub=subN+subU;
+    $('sub'+i).textContent=fmtM(sub);
+    capexVeh+=sub; units+=n+u; nNew+=n; nUsed+=u;
+    rev+=(n+u)*c.rev*occF;
+    maint+=(n+u)*c.maint;
+    dep+=n*c.depNew+u*c.depUsed;
+    insSum+=(n+u)*c.ins;
+  });
+  // allow override of insurance via global field if user changed it from default 0.8
+  const insGlobal=parseFloat(insI);
+  if(!isNaN(insGlobal) && Math.abs(insGlobal-0.8)>0.001){ insSum=units*insGlobal; }
+
+  const kitCost=units*kit;
+  const taxFuel=units*(taxU+fuelU);
+  const overhead=units>0?(ohBase+ohUnit*units):0;
+  const gross=rev-maint-insSum-taxFuel;
+  const ebitda=gross-overhead;
+  const ebit=ebitda-dep;
+  const net=ebit>0?ebit*(1-ctax):ebit;
+  const opCash=net+dep;
+
+  const opexMonthly=(maint+insSum+taxFuel+overhead)/12;
+  const workingCap=opexMonthly*wcM;
+  const totalCapex=capexVeh+kitCost+setup+workingCap;
+
+  const roi=totalCapex>0?net/totalCapex*100:0;
+  const paybackCash=opCash>0?totalCapex/opCash:Infinity;
+  const ebitdaMargin=rev>0?ebitda/rev*100:0;
+
+  $('tNew').textContent=nNew; $('tUsed').textContent=nUsed; $('tCapex').textContent=fmtM(capexVeh);
+
+  const neg=v=>v<0?' class="neg"':'';
+  $('kpis').innerHTML=`
+    <div class="kpi"><div class="v">${units}</div><div class="l">Total scooters</div><div class="s">${nNew} new · ${nUsed} used</div></div>
+    <div class="kpi"><div class="v">${fmtM(totalCapex)} M</div><div class="l">Total startup capital (IDR)</div><div class="s">${fmtUSD(totalCapex*1e6/fx)}</div></div>
+    <div class="kpi"><div class="v">${fmtM(rev)} M</div><div class="l">Annual revenue (IDR)</div><div class="s">${fmtUSD(rev*1e6/fx)}</div></div>
+    <div class="kpi"><div class="v"${neg(ebitda)}>${fmtM(ebitda)} M</div><div class="l">EBITDA (IDR)</div><div class="s">${ebitdaMargin.toFixed(1)}% margin</div></div>
+    <div class="kpi"><div class="v"${neg(net)}>${fmtM(net)} M</div><div class="l">Net profit after tax (IDR)</div><div class="s">${fmtUSD(net*1e6/fx)}</div></div>
+    <div class="kpi"><div class="v"${neg(roi)}>${roi.toFixed(1)}%</div><div class="l">ROI (net / capital)</div><div class="s">cash payback ${isFinite(paybackCash)?paybackCash.toFixed(1)+' yrs':'n/a'}</div></div>
+  `;
+
+  const row=(l,v,bold)=>`<tr${bold?' class="tot"':''}><td>${l}</td><td class="num"${v<0?' style="color:#b00020"':''}>${fmtM(v)}</td><td class="num">${fmtUSD(v*1e6/fx)}</td></tr>`;
+  $('pl').innerHTML=`
+    <tr><th>Line (IDR millions / year)</th><th class="num">IDR M</th><th class="num">USD</th></tr>
+    ${row('Revenue',rev)}
+    ${row('– Maintenance &amp; parts',-maint)}
+    ${row('– Insurance',-insSum)}
+    ${row('– Vehicle tax + tracker + ops fuel',-taxFuel)}
+    ${row('Gross profit (pre-overhead)',gross,true)}
+    ${row('– Overhead (staff, premises, mktg, software, admin)',-overhead)}
+    ${row('EBITDA',ebitda,true)}
+    ${row('– Depreciation (fleet)',-dep)}
+    ${row('EBIT (pre-tax)',ebit,true)}
+    ${row('– Tax',-(ebit>0?ebit*ctax:0))}
+    ${row('Net profit after tax',net,true)}
+    ${row('Operating cash flow (net + depreciation)',opCash,true)}
+  `;
+}
+
+preset('rec50');
+</script>
+</body>
+</html>
