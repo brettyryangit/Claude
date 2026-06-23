@@ -118,9 +118,14 @@ async def _complete_onboarding(user: User, db: Session) -> None:
     streak = Streak(user_id=user.id, goal_id=goal.id)
     db.add(streak)
 
-    # Set trial end date
-    user.trial_ends_at = datetime.utcnow() + timedelta(days=7)
+    # Set trial end date — extended if referred
+    if not user.trial_ends_at:  # may already be set by referral link at sign-up
+        user.trial_ends_at = datetime.utcnow() + timedelta(days=7)
     user.onboarding_complete = True
+
+    # Confirm referral sign-up and notify referrer
+    from app.services.referral import confirm_referral_signup
+    confirm_referral_signup(user, db)
 
     # Tell them we're building their plan
     await whatsapp_service.send_text(

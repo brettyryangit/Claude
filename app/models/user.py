@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, JSON, Integer
+from sqlalchemy import Column, String, Boolean, DateTime, JSON, Integer, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -35,6 +35,12 @@ class User(Base):
     # Streak freeze
     streak_freezes_available = Column(Integer, default=1)
 
+    # Referral
+    referred_by_code = Column(String, nullable=True)        # code used when they signed up
+    referral_discount_applied = Column(Boolean, default=False)
+    referral_wallet_balance = Column(Float, default=0.0)    # pending commission to pay out
+    referral_wallet_paid = Column(Float, default=0.0)       # total paid out lifetime
+
     # Conversation context (last N messages for Claude)
     conversation_context = Column(JSON, default=list)
 
@@ -48,3 +54,7 @@ class User(Base):
     check_ins = relationship("CheckIn", back_populates="user", cascade="all, delete-orphan")
     streaks = relationship("Streak", back_populates="user", cascade="all, delete-orphan")
     message_logs = relationship("MessageLog", back_populates="user", cascade="all, delete-orphan")
+    referral_code = relationship("ReferralCode", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    referrals_made = relationship("Referral", foreign_keys="Referral.referrer_user_id", back_populates="referrer")
+    referred_by = relationship("Referral", foreign_keys="Referral.referred_user_id", back_populates="referred", uselist=False)
+    referral_earnings = relationship("ReferralEarning", back_populates="referrer", cascade="all, delete-orphan")

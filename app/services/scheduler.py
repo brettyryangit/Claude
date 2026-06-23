@@ -42,6 +42,14 @@ def start_scheduler():
         replace_existing=True,
     )
 
+    # Monthly commission notifications — 1st of each month at 9am UTC
+    scheduler.add_job(
+        notify_monthly_commissions,
+        CronTrigger(day=1, hour=9, minute=0),
+        id="monthly_commissions",
+        replace_existing=True,
+    )
+
     scheduler.start()
     logger.info("Scheduler started")
 
@@ -278,6 +286,45 @@ async def send_weekly_summaries():
 
             except Exception as e:
                 logger.error(f"Weekly summary failed for {user.phone_number}: {e}")
+
+    finally:
+        db.close()
+
+
+async def notify_monthly_commissions():
+    """On the 1st of each month, notify all referrers with pending wallet balances."""
+    db: Session = SessionLocal()
+    try:
+        users = db.query(User).filter(
+            User.is_active == True,
+            User.referral_wallet_balance > 0,
+        ).all()
+
+        for user in users:
+            try:
+                balance = user.referral_wallet_balance or 0
+                total_refs = len(user.referrals_made) if user.referrals_made else 0
+                converted = sum(1 for r in (user.referrals_made or []) if r.status == "converted")
+
+                await whatsapp_service.send_text(
+                    user.phone_number,
+                    f"💰 *Monthly Commission Report*\n\n"
+                    f"This month you earned: *£{balance:.2f}*\n"
+                    f"Active paying referrals: {converted}\n"
+                    f"Total referrals: {total_refs}\n\n"
+                    f"Your payout is being processed and will arrive within 3 business days "
+                    f"via your registered payment method.\n\n"
+                    f"Keep sharing — every referral earns you 20% every month they stay. "
+                    f"Reply *SHARE* to get your link. 🚀"
+                )
+
+                # Reset monthly balance (mark as paid)
+                user.referral_wallet_paid = round((user.referral_wallet_paid or 0) + balance, 2)
+                user.referral_wallet_balance = 0
+                db.commit()
+
+            except Exception as e:
+                logger.error(f"Commission notification failed for {user.phone_number}: {e}")
 
     finally:
         db.close()

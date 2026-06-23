@@ -6,7 +6,9 @@ from datetime import datetime
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.user import User
+from app.models.referral import Referral
 from app.services.whatsapp import whatsapp_service
+from app.services.referral import record_commission
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/stripe", tags=["stripe"])
@@ -49,6 +51,32 @@ async def stripe_webhook(request: Request):
 
                     message = TIER_MESSAGES.get(tier, "You're all set! Let's go. 🔥")
                     await whatsapp_service.send_text(phone, f"Payment confirmed ✅ {message}")
+
+                    # Fire referral commission if this user was referred
+                    if user.referred_by_code:
+                        referral = db.query(Referral).filter(
+                            Referral.referred_user_id == user.id,
+                        ).first()
+                        if referral and referral.status != "converted":
+                            referral.status = "converted"
+                            referral.converted_at = datetime.utcnow()
+
+                        # Calculate commission from invoice amount
+                        invoice_amount = session.get("amount_total", 0) / 100  # pence to pounds
+                        commission = round(invoice_amount * referral.commission_rate, 2) if referral else 0
+                        if commission > 0 and referral:
+                            month = datetime.utcnow().strftime("%Y-%m")
+                            record_commission(referral.referrer_user_id, referral.id, commission, month, db)
+                            # Notify referrer
+                            referrer = db.query(User).filter(User.id == referral.referrer_user_id).first()
+                            if referrer:
+                                await whatsapp_service.send_text(
+                                    referrer.phone_number,
+                                    f"💰 Commission earned! Someone you referred just subscribed. "
+                                    f"£{commission:.2f} added to your wallet. "
+                                    f"You'll earn this every month they stay subscribed. "
+                                    f"Reply *WALLET* to see your balance."
+                                )
 
         elif event["type"] == "customer.subscription.deleted":
             customer_id = event["data"]["object"].get("customer")

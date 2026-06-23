@@ -13,6 +13,11 @@ from app.services.whatsapp import whatsapp_service
 from app.services.onboarding import handle_onboarding_message
 from app.services.claude_ai import assess_check_in_reply, handle_free_chat
 from app.services.stripe_service import create_checkout_link
+from app.services.referral import (
+    record_referral_click, confirm_referral_signup,
+    send_referral_stats, send_share_message_to_user,
+    REFERRAL_TRIAL_DAYS,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhook", tags=["whatsapp"])
@@ -26,6 +31,14 @@ I'll keep you on track with your goals through daily check-ins, morning motivati
 You get *7 days completely free* to try this out. No card needed right now.
 
 Ready to start? Just say *yes* and I'll ask you 10 quick questions to set everything up. Takes about 3 minutes. 🔥"""
+
+REFERRAL_WELCOME_MESSAGE = """Hey 👋 Welcome to *Grit* — your personal AI accountability coach.
+
+A friend shared their link with you, so you get *30 days completely free* (instead of the usual 7) plus *20% off your first month* when you subscribe. 🎁
+
+I'll send you a personalised 90-day plan, check in with you daily, and track your streak — all right here in WhatsApp. No app needed.
+
+Ready? Just say *yes* and we'll get started. Takes 3 minutes. 🔥"""
 
 
 @router.get("")
@@ -95,13 +108,29 @@ async def _route_message(phone: str, text: str, user: User | None, db: Session) 
     """Route incoming message to the correct handler."""
     text_lower = text.lower().strip()
 
-    # New user
+    # New user — check if they came via a referral link (text starts with START <CODE>)
     if not user:
-        if text_lower in ["yes", "start", "hi", "hello", "hey"]:
+        referral_code = None
+        is_referral = False
+
+        # Referral deep link: "START BRETT-X7K2"
+        parts = text.strip().split()
+        if len(parts) == 2 and parts[0].upper() == "START":
+            referral_code = parts[1].upper()
+            referral = record_referral_click(referral_code, phone, db)
+            is_referral = referral is not None
+
+        if text_lower.startswith("start") or text_lower in ["yes", "hi", "hello", "hey"]:
+            from datetime import timedelta
             new_user = User(phone_number=phone)
+            if is_referral:
+                new_user.referred_by_code = referral_code
+                new_user.trial_ends_at = datetime.utcnow() + timedelta(days=REFERRAL_TRIAL_DAYS)
+                new_user.referral_discount_applied = True
             db.add(new_user)
             db.flush()
-            await whatsapp_service.send_text(phone, WELCOME_MESSAGE)
+            welcome = REFERRAL_WELCOME_MESSAGE if is_referral else WELCOME_MESSAGE
+            await whatsapp_service.send_text(phone, welcome)
         else:
             await whatsapp_service.send_text(
                 phone,
@@ -137,6 +166,30 @@ async def _route_message(phone: str, text: str, user: User | None, db: Session) 
         except Exception as e:
             logger.error(f"Stripe link error: {e}")
             await whatsapp_service.send_text(phone, "Sorry, there was a hiccup with the payment link. Try again in a minute.")
+        return
+
+    # Referral commands — EARN, SHARE, STATS, REFER
+    if text_lower in ["earn", "refer", "referral", "affiliate"]:
+        await send_referral_stats(user, db)
+        return
+
+    if text_lower in ["share", "share link", "my link", "referral link"]:
+        await send_share_message_to_user(user, db)
+        return
+
+    if text_lower in ["wallet", "balance", "my earnings", "commission"]:
+        wallet = user.referral_wallet_balance or 0
+        paid = user.referral_wallet_paid or 0
+        total_refs = len(user.referrals_made) if user.referrals_made else 0
+        await whatsapp_service.send_text(
+            user.phone_number,
+            f"💰 *Your Referral Wallet*\n\n"
+            f"Pending balance: £{wallet:.2f}\n"
+            f"Total paid out: £{paid:.2f}\n"
+            f"Total referrals: {total_refs}\n\n"
+            f"Payouts are processed on the 1st of each month via bank transfer or PayPal. "
+            f"Reply *SHARE* to get your referral link."
+        )
         return
 
     # Streak freeze

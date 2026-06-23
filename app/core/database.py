@@ -17,5 +17,5 @@ def get_db():
 
 
 def create_tables():
-    from app.models import user, goal, checkin, streak, message_log  # noqa
+    from app.models import user, goal, checkin, streak, message_log, referral  # noqa
     Base.metadata.create_all(bind=engine)
