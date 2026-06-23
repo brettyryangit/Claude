@@ -1,0 +1,17 @@
+# Secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+.supabase
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Deno
+deno.lock

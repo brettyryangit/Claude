@@ -1,0 +1,16 @@
+# Supabase project config. Adjust project_id after `supabase init`/`link`.
+project_id = "whatsapp-accountability-bot"
+
+[functions.whatsapp-webhook]
+# Called by the BSP (Twilio), not an authenticated Supabase user — no JWT.
+verify_jwt = false
+
+[functions.send-checkins]
+# Called by the cron scheduler; guarded by CRON_SECRET instead of a JWT.
+verify_jwt = false
+
+[functions.detect-patterns]
+verify_jwt = false
+
+[functions.expire-trials]
+verify_jwt = false

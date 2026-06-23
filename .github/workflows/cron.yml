@@ -1,0 +1,59 @@
+# Scheduling for the background jobs.
+#
+# The spec suggests a simple external cron (GitHub Actions / cron-job.org)
+# hitting the function webhooks — no dedicated infra. This workflow does that.
+# Each job authenticates with the shared CRON_SECRET.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   FUNCTIONS_BASE_URL  e.g. https://<project-ref>.supabase.co/functions/v1
+#   CRON_SECRET         same value set on the functions' env
+#
+# Note: GitHub Actions cron is best-effort (can be delayed several minutes under
+# load). For tighter timing, point cron-job.org or Supabase's scheduler at the
+# same URLs instead — the functions don't care who calls them.
+
+name: accountability-bot-cron
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # send-checkins: every 15 minutes
+    - cron: "0 9 * * 1"    # detect-patterns: weekly, Mondays 09:00 UTC
+    - cron: "30 0 * * *"   # expire-trials: daily, 00:30 UTC
+  workflow_dispatch: {}      # allow manual runs for testing
+
+jobs:
+  send-checkins:
+    if: github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger send-checkins
+        run: |
+          curl -fsS -X POST "$BASE/send-checkins" \
+            -H "x-cron-secret: $SECRET"
+        env:
+          BASE: ${{ secrets.FUNCTIONS_BASE_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+
+  detect-patterns:
+    if: github.event.schedule == '0 9 * * 1' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger detect-patterns
+        run: |
+          curl -fsS -X POST "$BASE/detect-patterns" \
+            -H "x-cron-secret: $SECRET"
+        env:
+          BASE: ${{ secrets.FUNCTIONS_BASE_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
+
+  expire-trials:
+    if: github.event.schedule == '30 0 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger expire-trials
+        run: |
+          curl -fsS -X POST "$BASE/expire-trials" \
+            -H "x-cron-secret: $SECRET"
+        env:
+          BASE: ${{ secrets.FUNCTIONS_BASE_URL }}
+          SECRET: ${{ secrets.CRON_SECRET }}
