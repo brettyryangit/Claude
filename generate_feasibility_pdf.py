@@ -20,6 +20,35 @@ OUTPUT  = "/home/user/Claude/Grit_Feasibility_Study.pdf"
 
 W = A4[0] - 4.4 * cm   # usable width
 
+import re as _re
+
+_VERDICT_MAP = [
+    ("✅", '<font color="#27ae60"><b>PASS</b></font>'),   # ✅
+    ("⚠️", '<font color="#f39c12"><b>RISK</b></font>'),  # ⚠️
+    ("⚠", '<font color="#f39c12"><b>RISK</b></font>'),    # ⚠
+    ("❌", '<font color="#e94560"><b>AVOID</b></font>'),   # ❌
+    ("★", "*"),                                            # ★
+    ("⬤", "•"),                                       # ⬤ -> bullet
+]
+
+# strip anything outside Latin-1 except a few safe punctuation marks (dashes, curly quotes, ellipsis, bullet)
+_EMOJI_RE = _re.compile(r"[^\x00-\xFF‐-—‘-”•…]")
+
+
+def clean_cell(s):
+    """Colourise verdict icons, then strip unsupported emoji. For table cells."""
+    s = str(s)
+    for emo, repl in _VERDICT_MAP:
+        s = s.replace(emo, repl)
+    return _EMOJI_RE.sub("", s).strip()
+
+
+def clean_text(s):
+    """Strip unsupported emoji only. For headings, boxes, body text."""
+    s = str(s)
+    s = s.replace("★", "*").replace("⬤", "•")
+    return _EMOJI_RE.sub("", s)
+
 
 def hdr_ftr(canvas, doc):
     canvas.saveState()
@@ -57,23 +86,38 @@ def mk_styles():
     return s
 
 
+_CELL_HDR = ParagraphStyle("cellhdr", fontSize=8.5, textColor=WHITE,
+    fontName="Helvetica-Bold", leading=11, alignment=TA_LEFT)
+_CELL_BODY = ParagraphStyle("cellbody", fontSize=8.5, textColor=colors.HexColor("#222"),
+    fontName="Helvetica", leading=11, alignment=TA_LEFT)
+
+
+def _wrap(value, style):
+    """Wrap a cell value in a Paragraph so it flows within the column width."""
+    if hasattr(value, "wrap"):   # already a flowable (Paragraph, etc.)
+        return value
+    text = clean_cell(value).replace("\n", "<br/>")
+    return Paragraph(text, style)
+
+
 def tbl(data, cw=None, header_color=DARK):
-    t = Table(data, colWidths=cw, repeatRows=1)
+    wrapped = []
+    for r, row in enumerate(data):
+        style = _CELL_HDR if r == 0 else _CELL_BODY
+        wrapped.append([_wrap(c, style) for c in row])
+
+    t = Table(wrapped, colWidths=cw, repeatRows=1)
     rc = []
     for i in range(1, len(data)):
         rc.append(("BACKGROUND",(0,i),(-1,i), colors.HexColor("#f9f9f9") if i%2==1 else WHITE))
     t.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,0), header_color),
-        ("TEXTCOLOR",(0,0),(-1,0), WHITE),
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
-        ("FONTSIZE",(0,0),(-1,0), 9),
-        ("FONTNAME",(0,1),(-1,-1),"Helvetica"),
-        ("FONTSIZE",(0,1),(-1,-1), 9),
         ("GRID",(0,0),(-1,-1), 0.4, colors.HexColor("#ddd")),
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-        ("TOPPADDING",(0,0),(-1,-1), 6),
-        ("BOTTOMPADDING",(0,0),(-1,-1), 6),
-        ("LEFTPADDING",(0,0),(-1,-1), 8),
+        ("TOPPADDING",(0,0),(-1,-1), 5),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 5),
+        ("LEFTPADDING",(0,0),(-1,-1), 6),
+        ("RIGHTPADDING",(0,0),(-1,-1), 6),
         *rc,
     ]))
     return t
@@ -84,10 +128,11 @@ def div():
 
 
 def sec(text):
-    return Paragraph(f"&nbsp;&nbsp;{text}", mk_styles()["sec"])
+    return Paragraph(f"&nbsp;&nbsp;{clean_text(text)}", mk_styles()["sec"])
 
 
 def box(text, bg=DARK, fg=WHITE, size=11):
+    text = clean_text(text).replace("\n", "<br/>")
     t = Table([[Paragraph(text, ParagraphStyle("bx", fontSize=size, textColor=fg,
         fontName="Helvetica-Bold", alignment=TA_CENTER, leading=size+5))]],
         colWidths=[W])
@@ -478,7 +523,7 @@ def build():
         ["6","150","420","$3,762","$1,100","$2,662","$7,703"],
         ["9","200","750","$6,718","$1,850","$4,868","$22,375"],
         ["12","250","1,100","$9,856","$2,600","$7,256","$47,890"],
-    ], cw=[1.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,3.5*cm])
+    ], cw=[1.3*cm,2.4*cm,2.4*cm,2.3*cm,2.3*cm,2.3*cm,3.5*cm])
     story.append(con)
     story.append(Paragraph("Year 1 profit: ~$47,890 USD | Month 12 ARR: ~$118,000", s["cap"]))
 
@@ -493,7 +538,7 @@ def build():
         ["6","800","2,200","$19,712","$4,500","$15,212","$42,747"],
         ["9","1,000","4,500","$40,320","$8,500","$31,820","$131,000"],
         ["12","1,200","7,500","$67,200","$13,800","$53,400","$260,000"],
-    ], cw=[1.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,3.5*cm])
+    ], cw=[1.3*cm,2.4*cm,2.4*cm,2.3*cm,2.3*cm,2.3*cm,3.5*cm])
     story.append(mod)
     story.append(Paragraph("Year 1 profit: ~$260,000 USD | Month 12 ARR: ~$806,400", s["cap"]))
 
@@ -508,7 +553,7 @@ def build():
         ["6","2,000","10,000","$89,600","$16,000","$73,600","$226,650"],
         ["9","2,000","14,000","$125,440","$21,000","$104,440","$536,520"],
         ["12","2,500","18,000","$161,280","$26,000","$135,280","$943,880"],
-    ], cw=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,2.5*cm,3*cm])
+    ], cw=[2*cm,2.3*cm,2.4*cm,2.5*cm,2.3*cm,2.3*cm,2.8*cm])
     story.append(agg)
     story.append(Paragraph("Year 1 profit: ~$943,880 USD | Month 12 ARR: ~$1.9M — requires surviving the infrastructure spike.", s["cap"]))
     story.append(PageBreak())

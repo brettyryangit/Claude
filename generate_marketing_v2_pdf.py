@@ -17,6 +17,30 @@ GREY   = colors.HexColor("#555555")
 LGREY  = colors.HexColor("#f5f5f5")
 WHITE  = colors.white
 OUTPUT = "/home/user/Claude/Grit_Marketing_Plan_v2.pdf"
+
+import re as _re
+
+_VERDICT_MAP = [
+    ("✅", '<font color="#27ae60"><b>PASS</b></font>'),
+    ("⚠️", '<font color="#f39c12"><b>RISK</b></font>'),
+    ("⚠", '<font color="#f39c12"><b>RISK</b></font>'),
+    ("❌", '<font color="#e94560"><b>AVOID</b></font>'),
+    ("★", "*"),
+    ("⬤", "•"),
+]
+_EMOJI_RE = _re.compile(r"[^\x00-\xFF‐-—‘-”•…]")
+
+
+def clean_cell(s):
+    s = str(s)
+    for emo, repl in _VERDICT_MAP:
+        s = s.replace(emo, repl)
+    return _EMOJI_RE.sub("", s).strip()
+
+
+def clean_text(s):
+    s = str(s).replace("★", "*").replace("⬤", "•")
+    return _EMOJI_RE.sub("", s)
 W      = A4[0] - 4.4*cm
 
 
@@ -58,17 +82,33 @@ def s():
 ST = s()
 
 
+_CELL_HDR = ParagraphStyle("cellhdr", fontSize=8.5, textColor=WHITE,
+    fontName="Helvetica-Bold", leading=11, alignment=TA_LEFT)
+_CELL_BODY = ParagraphStyle("cellbody", fontSize=8.5, textColor=colors.HexColor("#222"),
+    fontName="Helvetica", leading=11, alignment=TA_LEFT)
+
+
+def _wrap(value, style):
+    if hasattr(value, "wrap"):
+        return value
+    text = clean_cell(value).replace("\n", "<br/>")
+    return Paragraph(text, style)
+
+
 def tbl(data, cw=None):
-    t = Table(data, colWidths=cw, repeatRows=1)
+    wrapped = []
+    for r, row in enumerate(data):
+        style = _CELL_HDR if r == 0 else _CELL_BODY
+        wrapped.append([_wrap(c, style) for c in row])
+
+    t = Table(wrapped, colWidths=cw, repeatRows=1)
     rc = [("BACKGROUND",(0,i),(-1,i), colors.HexColor("#f9f9f9") if i%2==1 else WHITE) for i in range(1,len(data))]
     t.setStyle(TableStyle([
-        ("BACKGROUND",(0,0),(-1,0),DARK), ("TEXTCOLOR",(0,0),(-1,0),WHITE),
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"), ("FONTSIZE",(0,0),(-1,0),9),
-        ("FONTNAME",(0,1),(-1,-1),"Helvetica"), ("FONTSIZE",(0,1),(-1,-1),9),
+        ("BACKGROUND",(0,0),(-1,0),DARK),
         ("GRID",(0,0),(-1,-1),0.4,colors.HexColor("#ddd")),
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-        ("TOPPADDING",(0,0),(-1,-1),6), ("BOTTOMPADDING",(0,0),(-1,-1),6),
-        ("LEFTPADDING",(0,0),(-1,-1),8), *rc,
+        ("TOPPADDING",(0,0),(-1,-1),5), ("BOTTOMPADDING",(0,0),(-1,-1),5),
+        ("LEFTPADDING",(0,0),(-1,-1),6), ("RIGHTPADDING",(0,0),(-1,-1),6), *rc,
     ]))
     return t
 
@@ -78,10 +118,11 @@ def div():
 
 
 def sec(text):
-    return Paragraph(f"&nbsp;&nbsp;{text}", ST["sec"])
+    return Paragraph(f"&nbsp;&nbsp;{clean_text(text)}", ST["sec"])
 
 
 def box(text, bg=DARK, fg=WHITE, size=10):
+    text = clean_text(text).replace("\n", "<br/>")
     t = Table([[Paragraph(text, ParagraphStyle("bx", fontSize=size, textColor=fg,
         fontName="Helvetica-Bold", alignment=TA_CENTER, leading=size+5))]], colWidths=[W])
     t.setStyle(TableStyle([
@@ -93,6 +134,9 @@ def box(text, bg=DARK, fg=WHITE, size=10):
 
 
 def strat(num, title, body_text, how_paid, cost, timeline, usd_potential):
+    title, body_text = clean_text(title), clean_text(body_text)
+    how_paid, cost = clean_text(how_paid), clean_text(cost)
+    timeline, usd_potential = clean_text(timeline), clean_text(usd_potential)
     num_p = Paragraph(str(num), ST["num"])
     content = Table([
         [Paragraph(title, ParagraphStyle("st", fontSize=11, textColor=DARK, fontName="Helvetica-Bold", leading=15))],
@@ -231,7 +275,7 @@ def build():
         ["Core","$4.99/mo","$39.99/yr","$19.89 (33%)","$39.99 today","$3.33/mo"],
         ["Pro ★","$9.99/mo","$59.99/yr","$59.89 (50%)","$59.99 today","$5.00/mo"],
         ["Elite","$19.99/mo","$149.99/yr","$89.89 (37%)","$149.99 today","$12.50/mo"],
-    ], cw=[2*cm,2.5*cm,2.5*cm,2.5*cm,3.5*cm,4*cm])
+    ], cw=[1.8*cm,2.4*cm,2.4*cm,2.6*cm,3.2*cm,4.2*cm])
     story.append(annual)
     story.append(Paragraph("★ 'Less than $1.20 a week' is how to frame Pro Annual. Push it at end of trial and at 30-day streak.", ST["cap"]))
 
@@ -292,11 +336,14 @@ def build():
     story.append(Paragraph("The Pre-Written Share Message (Fitness Version)", ST["h2"]))
     story.append(div())
     share_msg = Table([[Paragraph(
-        "<i>\"Hey! I've been using this AI accountability coach called Grit and it's actually keeping me on track "
-        "with my fitness goals 💪 It texts me every day on WhatsApp, gave me a personalised 90-day plan as a PDF, "
-        "and tracks my streak. You get a FREE 30-day trial (instead of the usual 7) plus 20% off your first month "
-        "if you use my link. No app to download — just WhatsApp 👇\\n\\nhttps://wa.me/61XXXXXX?text=START+BRETT-X7K2\\n\\n"
-        "Seriously try it, it's changed my routine.\"</i>",
+        clean_text(
+            "<i>\"Hey! I've been using this AI accountability coach called Grit and it's actually keeping me on track "
+            "with my fitness goals. It texts me every day on WhatsApp, gave me a personalised 90-day plan as a PDF, "
+            "and tracks my streak. You get a FREE 30-day trial (instead of the usual 7) plus 20% off your first month "
+            "if you use my link. No app to download — just WhatsApp.<br/><br/>"
+            "https://wa.me/61XXXXXX?text=START+BRETT-X7K2<br/><br/>"
+            "Seriously try it, it's changed my routine.\"</i>"
+        ),
         ParagraphStyle("msg", fontSize=9.5, textColor=colors.HexColor("#333"), fontName="Helvetica", leading=15))
     ]], colWidths=[W])
     share_msg.setStyle(TableStyle([
