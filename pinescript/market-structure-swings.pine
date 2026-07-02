@@ -1,0 +1,111 @@
+//@version=6
+indicator("Market Structure — HH/HL/LH/LL, Swing Count & Failure Swings", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ───────────────────────── Inputs ─────────────────────────
+pivLen        = input.int(14, "Pivot Window", minval=2, group="Structure")
+showStructure = input.bool(true, "Show HH / HL / LH / LL Labels", group="Structure")
+showZigzag    = input.bool(true, "Show Swing Zigzag Line", group="Structure")
+
+showCount     = input.bool(true, "Show Swing Count", group="Swing Count")
+maxCount      = input.int(5, "Count Resets After N Swings", minval=2, maxval=9, group="Swing Count")
+
+showFailure   = input.bool(true, "Show Failure / Non-Failure (BOS) Swings", group="Failure Swings")
+failColor     = input.color(color.orange, "Failure Swing (SFP) Color", group="Failure Swings")
+bosColor      = input.color(color.aqua, "Non-Failure Swing (BOS) Color", group="Failure Swings")
+
+bullColor   = input.color(#00e676, "Bullish Structure Color", group="Colors")
+bearColor   = input.color(#ff5252, "Bearish Structure Color", group="Colors")
+zigzagColor = input.color(color.new(color.gray, 35), "Zigzag Line Color", group="Colors")
+
+// ───────────────────────── State ─────────────────────────
+ph = ta.pivothigh(pivLen, pivLen)
+pl = ta.pivotlow(pivLen, pivLen)
+
+var float lastPH        = na
+var float lastPL        = na
+var int   swingCount    = 0
+var float lastPivotPrice = na
+var int   lastPivotBar   = na
+
+atrVal = ta.atr(14)
+
+bool bearishFailure = false  // high wicks above prior swing high, closes back below (SFP)
+bool bullishBOS      = false  // high closes beyond prior swing high (confirmed break)
+bool bullishFailure  = false  // low wicks below prior swing low, closes back above (SFP)
+bool bearishBOS       = false  // low closes beyond prior swing low (confirmed break)
+
+// ───────────────────────── Pivot High ─────────────────────────
+if not na(ph)
+    int pivotBar = bar_index - pivLen
+    bool isHH = na(lastPH) or ph > lastPH
+    string tag = isHH ? "HH" : "LH"
+    color tagColor = isHH ? bullColor : bearColor
+
+    if not na(lastPH) and ph > lastPH
+        if close[pivLen] < lastPH
+            bearishFailure := true
+        else
+            bullishBOS := true
+
+    if showStructure
+        label.new(pivotBar, ph + atrVal * 0.5, tag, style=label.style_label_down,
+             color=color.new(color.black, 100), textcolor=tagColor, size=size.small)
+
+    if showCount
+        swingCount := swingCount + 1
+        int displayCount = (swingCount - 1) % maxCount + 1
+        label.new(pivotBar, ph + atrVal * 1.4, str.tostring(displayCount),
+             style=label.style_circle, color=tagColor, textcolor=color.white, size=size.tiny)
+
+    if showFailure and (bearishFailure or bullishBOS)
+        label.new(pivotBar, ph + atrVal * 2.2, bearishFailure ? "SFP" : "BOS",
+             style=label.style_label_down,
+             color=bearishFailure ? failColor : bosColor, textcolor=color.white, size=size.tiny)
+
+    if showZigzag and not na(lastPivotPrice)
+        line.new(lastPivotBar, lastPivotPrice, pivotBar, ph, color=zigzagColor, width=1)
+
+    lastPH := ph
+    lastPivotPrice := ph
+    lastPivotBar := pivotBar
+
+// ───────────────────────── Pivot Low ─────────────────────────
+if not na(pl)
+    int pivotBar = bar_index - pivLen
+    bool isLL = na(lastPL) or pl < lastPL
+    string tag = isLL ? "LL" : "HL"
+    color tagColor = isLL ? bearColor : bullColor
+
+    if not na(lastPL) and pl < lastPL
+        if close[pivLen] > lastPL
+            bullishFailure := true
+        else
+            bearishBOS := true
+
+    if showStructure
+        label.new(pivotBar, pl - atrVal * 0.5, tag, style=label.style_label_up,
+             color=color.new(color.black, 100), textcolor=tagColor, size=size.small)
+
+    if showCount
+        swingCount := swingCount + 1
+        int displayCount = (swingCount - 1) % maxCount + 1
+        label.new(pivotBar, pl - atrVal * 1.4, str.tostring(displayCount),
+             style=label.style_circle, color=tagColor, textcolor=color.white, size=size.tiny)
+
+    if showFailure and (bullishFailure or bearishBOS)
+        label.new(pivotBar, pl - atrVal * 2.2, bullishFailure ? "SFP" : "BOS",
+             style=label.style_label_up,
+             color=bullishFailure ? failColor : bosColor, textcolor=color.white, size=size.tiny)
+
+    if showZigzag and not na(lastPivotPrice)
+        line.new(lastPivotBar, lastPivotPrice, pivotBar, pl, color=zigzagColor, width=1)
+
+    lastPL := pl
+    lastPivotPrice := pl
+    lastPivotBar := pivotBar
+
+// ───────────────────────── Alerts (top-level, unconditional per bar) ─────────────────────────
+alertcondition(bearishFailure, title="Bearish Failure Swing (SFP)", message="{{ticker}}: Bearish Swing Failure Pattern — swept high, closed back below")
+alertcondition(bullishFailure, title="Bullish Failure Swing (SFP)", message="{{ticker}}: Bullish Swing Failure Pattern — swept low, closed back above")
+alertcondition(bullishBOS, title="Bullish Break of Structure", message="{{ticker}}: Bullish Break of Structure confirmed")
+alertcondition(bearishBOS, title="Bearish Break of Structure", message="{{ticker}}: Bearish Break of Structure confirmed")
