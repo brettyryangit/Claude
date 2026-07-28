@@ -1,5 +1,5 @@
 //@version=5
-indicator("Leading Pin Bar + OBV Divergence + Market Structure", shorttitle="PinBar+OBV+MS",
+indicator("Leading Pin Bar + OBV Divergence + Market Structure", shorttitle="PB+OBV+MS",
      overlay=true, max_labels_count=500, max_boxes_count=500, max_lines_count=500)
 
 // =====================================================================
@@ -144,16 +144,15 @@ recentHidBear = latch(hidBearHere, hold)
 // =====================================================================
 // SECTION 3 - Lower-timeframe confirmation
 // =====================================================================
-ltfRegBull = false
-ltfRegBear = false
-ltfHidBull = false
-ltfHidBear = false
-if useLTF
-    [rb, rr_, hb, hr] = request.security(syminfo.tickerid, ltfRes, calcDivergence(pivotLeft, pivotRight, maxPivotBars), lookahead=barmerge.lookahead_off)
-    ltfRegBull := rb
-    ltfRegBear := rr_
-    ltfHidBull := hb
-    ltfHidBear := hr
+// request.security() must be called unconditionally at the top level - Pine rejects it
+// inside an `if` block unless dynamic_requests is enabled. Gate the RESULTS instead.
+[ltfRegBullRaw, ltfRegBearRaw, ltfHidBullRaw, ltfHidBearRaw] = request.security(
+     syminfo.tickerid, ltfRes, calcDivergence(pivotLeft, pivotRight, maxPivotBars), lookahead=barmerge.lookahead_off)
+
+ltfRegBull = useLTF and ltfRegBullRaw
+ltfRegBear = useLTF and ltfRegBearRaw
+ltfHidBull = useLTF and ltfHidBullRaw
+ltfHidBear = useLTF and ltfHidBearRaw
 
 // Pin + divergence confluence signals
 longRegSignal  = detectRegular and bullPin and recentRegBull and (not useLTF or ltfRegBull)
