@@ -1,20 +1,22 @@
 //@version=5
-indicator("Leading Pin Bar + OBV Divergence + Market Structure", shorttitle="PB+OBV+MS",
-     overlay=true, max_labels_count=500, max_boxes_count=500, max_lines_count=500)
+indicator("Pin Bar + OBV Divergence + Market Structure", shorttitle="PB+OBV+MS",
+     overlay=true, max_labels_count=500)
 
 // =====================================================================
-// SECTION 1 INPUTS - Pin Bar
+// 1. PIN BAR
 // =====================================================================
 grp_pin = "1. Pin Bar"
-usePin         = input.bool(true, "Enable pin bar signals", group=grp_pin)
 wickBodyRatio  = input.float(2.0, "Min wick-to-body ratio", minval=1.0, step=0.1, group=grp_pin)
 maxOppWickPct  = input.float(30.0, "Max opposite wick (% of range)", minval=0.0, maxval=50.0, group=grp_pin)
-bodyNearEndPct = input.float(30.0, "Body must sit within X% of the long-wick end", minval=5.0, maxval=50.0, group=grp_pin)
+bodyNearEndPct = input.float(30.0, "Body within X% of the long-wick end", minval=5.0, maxval=50.0, group=grp_pin)
 
 // =====================================================================
-// SECTION 2 INPUTS - OBV Divergence
+// 2. OBV DIVERGENCE
 // =====================================================================
 grp_obv = "2. OBV Divergence"
+showDiv       = input.bool(true, "Show divergence signals", group=grp_obv)
+requirePinDiv = input.bool(true, "Require a pin bar with the divergence",
+     tooltip="On = only flag divergence that lands on a pin bar (far fewer, higher quality). Off = flag every divergence.", group=grp_obv)
 pivotLeft     = input.int(5, "Pivot lookback (left bars)", minval=1, group=grp_obv)
 pivotRight    = input.int(5, "Pivot lookback (right bars)", minval=1, group=grp_obv)
 maxPivotBars  = input.int(60, "Max bars between pivots", minval=5, group=grp_obv)
@@ -22,47 +24,40 @@ detectRegular = input.bool(true, "Detect regular divergence (reversal)", group=g
 detectHidden  = input.bool(true, "Detect hidden divergence (continuation)", group=grp_obv)
 
 grp_ltf = "3. Lower-Timeframe Confirmation"
-useLTF = input.bool(true, "Require lower-timeframe OBV divergence too", group=grp_ltf)
+useLTF = input.bool(false, "Require lower-timeframe OBV divergence too", group=grp_ltf)
 ltfRes = input.timeframe("15", "Lower timeframe", group=grp_ltf)
 
 // =====================================================================
-// SECTION 4 INPUTS - Market Structure (BOS / CHoCH)
+// 4. MARKET STRUCTURE
 // =====================================================================
 grp_ms = "4. Market Structure (BOS / CHoCH)"
-useStructure  = input.bool(true, "Enable market structure signals", group=grp_ms)
+showStructure = input.bool(true, "Show structure signals", group=grp_ms)
 swingLen      = input.int(10, "Swing pivot length (bars each side)", minval=1,
-     tooltip="How many bars must sit either side of a high/low for it to count as a swing point. Bigger = fewer, more significant levels, but confirmed later.", group=grp_ms)
+     tooltip="Bars required either side of a high/low to confirm a swing. Bigger = fewer, more significant levels.", group=grp_ms)
 breakMode     = input.string("Close", "Break confirmation", options=["Close", "Wick"],
-     tooltip="Close = the bar must CLOSE beyond the level (stricter, fewer false breaks). Wick = any touch beyond the level counts.", group=grp_ms)
+     tooltip="Close = the bar must CLOSE beyond the level (stricter). Wick = any touch counts.", group=grp_ms)
 breakBufferAtr = input.float(0.0, "Min break distance (x ATR)", minval=0.0, step=0.05,
-     tooltip="Price must exceed the level by this multiple of ATR before the break counts. 0 = any break counts.", group=grp_ms)
-atrLen        = input.int(14, "ATR length (for break buffer / risk)", minval=1, group=grp_ms)
-signalOn      = input.string("CHoCH only", "Signal on", options=["CHoCH only", "BOS only", "Both"],
-     tooltip="CHoCH = first break AGAINST the prevailing structure (reversal, matches the setups you marked). BOS = break in the SAME direction as structure (continuation).", group=grp_ms)
+     tooltip="Price must exceed the level by this multiple of ATR before the break counts.", group=grp_ms)
+atrLen        = input.int(14, "ATR length", minval=1, group=grp_ms)
+showCHoCH     = input.bool(true, "Show CHoCH (change of character / reversal)", group=grp_ms)
+showBOS       = input.bool(true, "Show BOS (break of structure / continuation)", group=grp_ms)
 requireObvConf = input.bool(true, "Require OBV to confirm the structure break",
-     tooltip="OBV must break its own level recorded at the same swing point, not just price. Filters breaks that happen on thin volume.", group=grp_ms)
-requirePinConf = input.bool(false, "Also require a pin bar within N bars",
-     tooltip="Only signal a structure break if a qualifying pin bar printed recently.", group=grp_ms)
-pinConfBars   = input.int(5, "  ...N bars", minval=1, group=grp_ms)
+     tooltip="OBV must break the OBV value recorded at that same swing point, not just price.", group=grp_ms)
 
 // =====================================================================
-// SECTION 5 INPUTS - Risk / Reward boxes
+// 5. DISPLAY
 // =====================================================================
-grp_rr = "5. Risk / Reward Boxes"
-showRR    = input.bool(true, "Draw R:R boxes on structure signals", group=grp_rr)
-rrRatio   = input.float(2.0, "Reward : Risk ratio", minval=0.1, step=0.1, group=grp_rr)
-rrBoxBars = input.int(20, "Box width (bars)", minval=1, group=grp_rr)
-stopBufAtr = input.float(0.1, "Stop buffer beyond swing (x ATR)", minval=0.0, step=0.05, group=grp_rr)
-
-// =====================================================================
-// SECTION 6 INPUTS - Display
-// =====================================================================
-grp_disp = "6. Display"
-showTable  = input.bool(true, "Show status table", group=grp_disp)
-tablePos   = input.string(position.top_right, "Table position",
+grp_disp = "5. Display"
+showTable   = input.bool(true, "Show status table", group=grp_disp)
+tablePos    = input.string(position.top_right, "Table position",
      options=[position.top_right, position.top_left, position.bottom_right, position.bottom_left], group=grp_disp)
-showLevels = input.bool(true, "Draw active swing high/low levels", group=grp_disp)
-showMSLabels = input.bool(true, "Label BOS / CHoCH events on chart", group=grp_disp)
+lblSize     = input.string("Small", "Label size", options=["Tiny", "Small", "Normal"], group=grp_disp)
+shortText   = input.bool(false, "Use short labels",
+     tooltip="On = 'Bull CHoCH'. Off = 'Bullish CHoCH'.", group=grp_disp)
+showPinDots = input.bool(false, "Mark unconfirmed pin bars (dots)", group=grp_disp)
+showLevels  = input.bool(false, "Draw active structure levels", group=grp_disp)
+
+labelSize = lblSize == "Tiny" ? size.tiny : lblSize == "Normal" ? size.normal : size.small
 
 // =====================================================================
 // Shared series
@@ -71,7 +66,7 @@ obv = ta.cum(math.sign(ta.change(close)) * volume)
 atr = ta.atr(atrLen)
 
 // =====================================================================
-// Reusable divergence calc: [regBull, regBear, hidBull, hidBear]
+// Divergence calc: [regBull, regBear, hidBull, hidBear]
 // =====================================================================
 calcDivergence(int pLeft, int pRight, int maxBars) =>
     obvLocal = ta.cum(math.sign(ta.change(close)) * volume)
@@ -107,7 +102,7 @@ calcDivergence(int pLeft, int pRight, int maxBars) =>
         lhObv   := po
     [regBull, regBear, hidBull, hidBear]
 
-// Latch a one-bar condition forward so it can line up with a later trigger.
+// Hold a one-bar condition forward so it can line up with a later trigger.
 latch(bool cond, int holdBars) =>
     var int expires = na
     if cond
@@ -115,23 +110,23 @@ latch(bool cond, int holdBars) =>
     not na(expires) and bar_index <= expires
 
 // =====================================================================
-// SECTION 1 - Pin bar detection
+// Pin bars
 // =====================================================================
 barRange  = high - low
 body      = math.abs(close - open)
 upperWick = high - math.max(close, open)
 lowerWick = math.min(close, open) - low
 
-bullPin = usePin and barRange > 0 and lowerWick >= body * wickBodyRatio and
+bullPin = barRange > 0 and lowerWick >= body * wickBodyRatio and
      upperWick <= barRange * maxOppWickPct / 100 and
      (high - math.max(close, open)) <= barRange * bodyNearEndPct / 100
 
-bearPin = usePin and barRange > 0 and upperWick >= body * wickBodyRatio and
+bearPin = barRange > 0 and upperWick >= body * wickBodyRatio and
      lowerWick <= barRange * maxOppWickPct / 100 and
      (math.min(close, open) - low) <= barRange * bodyNearEndPct / 100
 
 // =====================================================================
-// SECTION 2 - OBV divergence, current timeframe
+// Divergence signals
 // =====================================================================
 [regBullHere, regBearHere, hidBullHere, hidBearHere] = calcDivergence(pivotLeft, pivotRight, maxPivotBars)
 
@@ -141,259 +136,236 @@ recentRegBear = latch(regBearHere, hold)
 recentHidBull = latch(hidBullHere, hold)
 recentHidBear = latch(hidBearHere, hold)
 
-// =====================================================================
-// SECTION 3 - Lower-timeframe confirmation
-// =====================================================================
-// request.security() must be called unconditionally at the top level - Pine rejects it
-// inside an `if` block unless dynamic_requests is enabled. Gate the RESULTS instead.
+// request.security() must sit at the top level - Pine rejects it inside an `if`.
 [ltfRegBullRaw, ltfRegBearRaw, ltfHidBullRaw, ltfHidBearRaw] = request.security(
      syminfo.tickerid, ltfRes, calcDivergence(pivotLeft, pivotRight, maxPivotBars), lookahead=barmerge.lookahead_off)
 
-ltfRegBull = useLTF and ltfRegBullRaw
-ltfRegBear = useLTF and ltfRegBearRaw
-ltfHidBull = useLTF and ltfHidBullRaw
-ltfHidBear = useLTF and ltfHidBearRaw
+ltfOkBullReg = not useLTF or ltfRegBullRaw
+ltfOkBearReg = not useLTF or ltfRegBearRaw
+ltfOkBullHid = not useLTF or ltfHidBullRaw
+ltfOkBearHid = not useLTF or ltfHidBearRaw
 
-// Pin + divergence confluence signals
-longRegSignal  = detectRegular and bullPin and recentRegBull and (not useLTF or ltfRegBull)
-longHidSignal  = detectHidden  and bullPin and recentHidBull and (not useLTF or ltfHidBull)
-shortRegSignal = detectRegular and bearPin and recentRegBear and (not useLTF or ltfRegBear)
-shortHidSignal = detectHidden  and bearPin and recentHidBear and (not useLTF or ltfHidBear)
+pinOkBull = not requirePinDiv or bullPin
+pinOkBear = not requirePinDiv or bearPin
 
-anyLong  = longRegSignal or longHidSignal
-anyShort = shortRegSignal or shortHidSignal
+// Fire on the bar the divergence is confirmed (or on the pin bar, if that is required).
+trigBull = requirePinDiv ? bullPin : (regBullHere or hidBullHere)
+trigBear = requirePinDiv ? bearPin : (regBearHere or hidBearHere)
+
+divBullReg = showDiv and detectRegular and trigBull and pinOkBull and recentRegBull and ltfOkBullReg
+divBullHid = showDiv and detectHidden  and trigBull and pinOkBull and recentHidBull and ltfOkBullHid
+divBearReg = showDiv and detectRegular and trigBear and pinOkBear and recentRegBear and ltfOkBearReg
+divBearHid = showDiv and detectHidden  and trigBear and pinOkBear and recentHidBear and ltfOkBearHid
+
+// A bar can satisfy regular and hidden at once; regular wins so we draw one label.
+divBullHidOnly = divBullHid and not divBullReg
+divBearHidOnly = divBearHid and not divBearReg
+
+anyDivBull = divBullReg or divBullHidOnly
+anyDivBear = divBearReg or divBearHidOnly
 
 // =====================================================================
-// SECTION 4 - Market structure: swing tracking, BOS and CHoCH
+// Market structure - protected levels, BOS and CHoCH
 // =====================================================================
+// The reference levels do NOT follow every minor pivot. After a bullish break the
+// structural low is locked in; only a break of THAT level is a real change of
+// character. Without this, every small pullback reads as a structure flip.
 msPH = ta.pivothigh(high, swingLen, swingLen)
 msPL = ta.pivotlow(low, swingLen, swingLen)
 
-var float swingHigh    = na   // active (unbroken) swing high level
-var float swingLow     = na   // active (unbroken) swing low level
-var float obvAtSH      = na   // OBV recorded at that swing high
-var float obvAtSL      = na   // OBV recorded at that swing low
-var bool  shBroken     = true // has the active swing high already been taken?
-var bool  slBroken     = true
-var int   bias         = 0    // 1 = bullish structure, -1 = bearish, 0 = undetermined
-var float prevSwingHigh = na  // the swing high before the current one (stop reference for longs)
-var float prevSwingLow  = na
+var float recentPH = na   // newest confirmed pivot high
+var float recentPL = na   // newest confirmed pivot low
+var float protHigh = na   // break above this = bullish structure event
+var float protLow  = na   // break below this = bearish structure event
+var float obvAtHigh = na
+var float obvAtLow  = na
+var int   trend     = 0   // 1 bullish, -1 bearish, 0 undetermined
 
 if not na(msPH)
-    prevSwingHigh := swingHigh
-    swingHigh := msPH
-    obvAtSH   := obv[swingLen]
-    shBroken  := false
+    recentPH := msPH
+    // In an uptrend (or before structure is known) the newest swing high is the BOS
+    // target. In a downtrend protHigh stays locked at the CHoCH level.
+    if trend >= 0 or na(protHigh)
+        protHigh := msPH
+        obvAtHigh := obv[swingLen]
 
 if not na(msPL)
-    prevSwingLow := swingLow
-    swingLow := msPL
-    obvAtSL  := obv[swingLen]
-    slBroken := false
+    recentPL := msPL
+    if trend <= 0 or na(protLow)
+        protLow := msPL
+        obvAtLow := obv[swingLen]
 
 breakUpSrc = breakMode == "Close" ? close : high
 breakDnSrc = breakMode == "Close" ? close : low
 buffer     = breakBufferAtr * atr
 
-rawBrokeUp = not na(swingHigh) and not shBroken and breakUpSrc > swingHigh + buffer
-rawBrokeDn = not na(swingLow)  and not slBroken and breakDnSrc < swingLow  - buffer
+rawUp = not na(protHigh) and breakUpSrc > protHigh + buffer
+rawDn = not na(protLow)  and breakDnSrc < protLow  - buffer
 
-// An outside bar that takes both sides at once is ambiguous: consume both levels,
-// signal neither, leave the bias untouched.
-ambiguous = rawBrokeUp and rawBrokeDn
-brokeUp   = rawBrokeUp and not ambiguous
-brokeDn   = rawBrokeDn and not ambiguous
+// A bar that takes out both sides is ambiguous - signal neither.
+ambiguous = rawUp and rawDn
+brokeUp   = rawUp and not ambiguous
+brokeDn   = rawDn and not ambiguous
 
-obvConfUp = not requireObvConf or (not na(obvAtSH) and obv > obvAtSH)
-obvConfDn = not requireObvConf or (not na(obvAtSL) and obv < obvAtSL)
-// latch() carries state, so it must run on every bar - never behind a short-circuiting `or`.
-recentBullPin = latch(bullPin, pinConfBars)
-recentBearPin = latch(bearPin, pinConfBars)
-pinConfUp = not requirePinConf or recentBullPin
-pinConfDn = not requirePinConf or recentBearPin
+obvConfUp = not requireObvConf or (not na(obvAtHigh) and obv > obvAtHigh)
+obvConfDn = not requireObvConf or (not na(obvAtLow)  and obv < obvAtLow)
 
 bullBOS   = false
 bullCHoCH = false
 bearBOS   = false
 bearCHoCH = false
-var float brokenLevel = na   // the exact level taken out, for the label tooltip / table
-var int   biasBefore  = 0
-
-if ambiguous
-    shBroken := true
-    slBroken := true
+var float brokenLevel = na
+var int   trendBefore = 0
 
 if brokeUp
-    shBroken := true
-    biasBefore := bias
-    brokenLevel := swingHigh
-    if bias == -1
-        bullCHoCH := true
-    else if bias == 1
+    trendBefore := trend
+    brokenLevel := protHigh
+    if trend == 1
         bullBOS := true
-    bias := 1
+    else if trend == -1
+        bullCHoCH := true
+    trend := 1
+    protLow  := recentPL    // lock the low that supported this move
+    obvAtLow := obv
+    protHigh := na          // next confirmed pivot high becomes the new target
 
 if brokeDn
-    slBroken := true
-    biasBefore := bias
-    brokenLevel := swingLow
-    if bias == 1
-        bearCHoCH := true
-    else if bias == -1
+    trendBefore := trend
+    brokenLevel := protLow
+    if trend == -1
         bearBOS := true
-    bias := -1
+    else if trend == 1
+        bearCHoCH := true
+    trend := -1
+    protHigh  := recentPH
+    obvAtHigh := obv
+    protLow   := na
 
-wantCHoCH = signalOn == "CHoCH only" or signalOn == "Both"
-wantBOS   = signalOn == "BOS only"   or signalOn == "Both"
-
-structBuy = useStructure and obvConfUp and pinConfUp and
-     ((bullCHoCH and wantCHoCH) or (bullBOS and wantBOS))
-structSell = useStructure and obvConfDn and pinConfDn and
-     ((bearCHoCH and wantCHoCH) or (bearBOS and wantBOS))
-
-// =====================================================================
-// SECTION 5 - Risk / reward boxes on structure signals
-// =====================================================================
-// Long: stop below the swing low that produced the structure, target rrRatio x risk above entry.
-// Short: stop above the swing high, target rrRatio x risk below entry. Mirrors the boxes you drew.
-if showRR and (structBuy or structSell)
-    entry = close
-    stopRef = structBuy ? (na(swingLow) ? low : math.min(swingLow, low)) : (na(swingHigh) ? high : math.max(swingHigh, high))
-    stop = structBuy ? stopRef - stopBufAtr * atr : stopRef + stopBufAtr * atr
-    risk = math.abs(entry - stop)
-    if risk > 0
-        target = structBuy ? entry + risk * rrRatio : entry - risk * rrRatio
-        box.new(bar_index, math.max(entry, stop), bar_index + rrBoxBars, math.min(entry, stop),
-             border_color=color.new(color.red, 40), bgcolor=color.new(color.red, 80))
-        box.new(bar_index, math.max(entry, target), bar_index + rrBoxBars, math.min(entry, target),
-             border_color=color.new(color.teal, 40), bgcolor=color.new(color.teal, 80))
+structBull = showStructure and obvConfUp and ((bullCHoCH and showCHoCH) or (bullBOS and showBOS))
+structBear = showStructure and obvConfDn and ((bearCHoCH and showCHoCH) or (bearBOS and showBOS))
 
 // =====================================================================
-// Plots
+// Labels
 // =====================================================================
-// Section 1+2: pin bar + divergence confluence
-plotshape(longRegSignal, title="Bullish Regular Div (reversal)", style=shape.triangleup, location=location.belowbar,
-     color=color.new(color.lime, 0), size=size.small, text="REG")
-plotshape(longHidSignal, title="Bullish Hidden Div (continuation)", style=shape.diamond, location=location.belowbar,
-     color=color.new(color.teal, 0), size=size.small, text="HID")
-plotshape(shortRegSignal, title="Bearish Regular Div (reversal)", style=shape.triangledown, location=location.abovebar,
-     color=color.new(color.red, 0), size=size.small, text="REG")
-plotshape(shortHidSignal, title="Bearish Hidden Div (continuation)", style=shape.diamond, location=location.abovebar,
-     color=color.new(color.orange, 0), size=size.small, text="HID")
+trendTxt(int t) => t == 1 ? "Bullish" : t == -1 ? "Bearish" : "Undetermined"
 
-plotshape(bullPin and not anyLong, title="Pin Bar Only (Bull)", style=shape.circle, location=location.belowbar,
-     color=color.new(color.lime, 70), size=size.tiny)
-plotshape(bearPin and not anyShort, title="Pin Bar Only (Bear)", style=shape.circle, location=location.abovebar,
-     color=color.new(color.red, 70), size=size.tiny)
+drawLabel(bool cond, string txt, bool isBull, color col, string tip) =>
+    if cond
+        label.new(bar_index, isBull ? low : high, text=txt,
+             yloc = isBull ? yloc.belowbar : yloc.abovebar,
+             style = isBull ? label.style_label_up : label.style_label_down,
+             color=col, textcolor=color.white, size=labelSize, tooltip=tip)
 
-// Section 4: structure BUY / SELL
-plotshape(structBuy,  title="Structure BUY",  style=shape.labelup,   location=location.belowbar,
-     color=color.new(color.green, 0), textcolor=color.white, size=size.normal, text="BUY")
-plotshape(structSell, title="Structure SELL", style=shape.labeldown, location=location.abovebar,
-     color=color.new(color.maroon, 0), textcolor=color.white, size=size.normal, text="SELL")
+divTip(string kind) =>
+    kind + "\nClose: " + str.tostring(close, format.mintick) +
+     "\nOBV: " + str.tostring(obv, "#.##") +
+     "\nPin bar required: " + (requirePinDiv ? "yes" : "no") +
+     "\nLTF confirm: " + (useLTF ? ltfRes : "off")
 
-// Verifiable detail per event, in the label tooltip
-if showMSLabels and (structBuy or structSell)
-    evName = structBuy ? (bullCHoCH ? "Bullish CHoCH" : "Bullish BOS") : (bearCHoCH ? "Bearish CHoCH" : "Bearish BOS")
-    tip = evName + "\nBroken level: " + str.tostring(brokenLevel, format.mintick) +
-         "\nClose: " + str.tostring(close, format.mintick) +
-         "\nBias before: " + (biasBefore == 1 ? "Bullish" : biasBefore == -1 ? "Bearish" : "Undetermined") +
-         "\nBias after: " + (bias == 1 ? "Bullish" : "Bearish") +
-         "\nOBV: " + str.tostring(obv, "#.##") +
-         "\nOBV at swing: " + str.tostring(structBuy ? obvAtSH : obvAtSL, "#.##") +
-         "\nATR(" + str.tostring(atrLen) + "): " + str.tostring(atr, format.mintick)
-    label.new(bar_index, structBuy ? low : high, text=evName,
-         style=structBuy ? label.style_label_up : label.style_label_down,
-         color=color.new(structBuy ? color.green : color.maroon, 20), textcolor=color.white,
-         size=size.tiny, tooltip=tip, yloc=structBuy ? yloc.belowbar : yloc.abovebar)
+msTip(string kind) =>
+    kind + "\nBroken level: " + str.tostring(brokenLevel, format.mintick) +
+     "\nClose: " + str.tostring(close, format.mintick) +
+     "\nTrend before: " + trendTxt(trendBefore) +
+     "\nTrend after: " + trendTxt(trend) +
+     "\nOBV: " + str.tostring(obv, "#.##") +
+     "\nATR(" + str.tostring(atrLen) + "): " + str.tostring(atr, format.mintick)
 
-plot(showLevels and not shBroken ? swingHigh : na, title="Active swing high", color=color.new(color.red, 40),
-     style=plot.style_linebr, linewidth=1)
-plot(showLevels and not slBroken ? swingLow : na, title="Active swing low", color=color.new(color.green, 40),
-     style=plot.style_linebr, linewidth=1)
+txtBullDiv = shortText ? "Bull Div"       : "Bullish Divergence"
+txtBearDiv = shortText ? "Bear Div"       : "Bearish Divergence"
+txtBullHid = shortText ? "Bull Hidden"    : "Bullish Hidden Div"
+txtBearHid = shortText ? "Bear Hidden"    : "Bearish Hidden Div"
+txtBullCh  = shortText ? "Bull CHoCH"     : "Bullish CHoCH"
+txtBearCh  = shortText ? "Bear CHoCH"     : "Bearish CHoCH"
+txtBullBos = shortText ? "Bull BOS"       : "Bullish BOS"
+txtBearBos = shortText ? "Bear BOS"       : "Bearish BOS"
+
+drawLabel(divBullReg,     txtBullDiv, true,  color.new(color.lime, 15),   divTip("Bullish regular divergence (reversal)"))
+drawLabel(divBearReg,     txtBearDiv, false, color.new(color.red, 15),    divTip("Bearish regular divergence (reversal)"))
+drawLabel(divBullHidOnly, txtBullHid, true,  color.new(color.teal, 15),   divTip("Bullish hidden divergence (continuation)"))
+drawLabel(divBearHidOnly, txtBearHid, false, color.new(color.orange, 15), divTip("Bearish hidden divergence (continuation)"))
+
+drawLabel(structBull and bullCHoCH, txtBullCh,  true,  color.new(color.green, 0),  msTip("Bullish CHoCH - reversal"))
+drawLabel(structBear and bearCHoCH, txtBearCh,  false, color.new(color.maroon, 0), msTip("Bearish CHoCH - reversal"))
+drawLabel(structBull and bullBOS,   txtBullBos, true,  color.new(color.green, 45), msTip("Bullish BOS - continuation"))
+drawLabel(structBear and bearBOS,   txtBearBos, false, color.new(color.maroon, 45), msTip("Bearish BOS - continuation"))
+
+plotshape(showPinDots and bullPin and not anyDivBull, title="Pin bar (bull, unconfirmed)",
+     style=shape.circle, location=location.belowbar, color=color.new(color.lime, 75), size=size.tiny)
+plotshape(showPinDots and bearPin and not anyDivBear, title="Pin bar (bear, unconfirmed)",
+     style=shape.circle, location=location.abovebar, color=color.new(color.red, 75), size=size.tiny)
+
+plot(showLevels ? protHigh : na, title="Protected high", color=color.new(color.red, 50),
+     style=plot.style_linebr, linewidth=1, display=display.pane)
+plot(showLevels ? protLow : na, title="Protected low", color=color.new(color.green, 50),
+     style=plot.style_linebr, linewidth=1, display=display.pane)
 
 // =====================================================================
 // Alerts
 // =====================================================================
-alertcondition(longRegSignal,  title="Bullish Pin Bar + Regular OBV Divergence", message="Bullish pin bar + regular OBV bullish divergence (reversal) on {{ticker}} {{interval}}")
-alertcondition(longHidSignal,  title="Bullish Pin Bar + Hidden OBV Divergence",  message="Bullish pin bar + hidden OBV bullish divergence (continuation) on {{ticker}} {{interval}}")
-alertcondition(shortRegSignal, title="Bearish Pin Bar + Regular OBV Divergence", message="Bearish pin bar + regular OBV bearish divergence (reversal) on {{ticker}} {{interval}}")
-alertcondition(shortHidSignal, title="Bearish Pin Bar + Hidden OBV Divergence",  message="Bearish pin bar + hidden OBV bearish divergence (continuation) on {{ticker}} {{interval}}")
-alertcondition(structBuy,      title="Structure BUY (BOS/CHoCH)",  message="Market structure BUY on {{ticker}} {{interval}} - close {{close}}")
-alertcondition(structSell,     title="Structure SELL (BOS/CHoCH)", message="Market structure SELL on {{ticker}} {{interval}} - close {{close}}")
+alertcondition(divBullReg,     title="Bullish Divergence",     message="Bullish OBV divergence on {{ticker}} {{interval}}")
+alertcondition(divBearReg,     title="Bearish Divergence",     message="Bearish OBV divergence on {{ticker}} {{interval}}")
+alertcondition(divBullHidOnly, title="Bullish Hidden Divergence", message="Bullish hidden OBV divergence on {{ticker}} {{interval}}")
+alertcondition(divBearHidOnly, title="Bearish Hidden Divergence", message="Bearish hidden OBV divergence on {{ticker}} {{interval}}")
+alertcondition(structBull and bullCHoCH, title="Bullish CHoCH", message="Bullish CHoCH on {{ticker}} {{interval}} - close {{close}}")
+alertcondition(structBear and bearCHoCH, title="Bearish CHoCH", message="Bearish CHoCH on {{ticker}} {{interval}} - close {{close}}")
+alertcondition(structBull and bullBOS,   title="Bullish BOS",   message="Bullish BOS on {{ticker}} {{interval}} - close {{close}}")
+alertcondition(structBear and bearBOS,   title="Bearish BOS",   message="Bearish BOS on {{ticker}} {{interval}} - close {{close}}")
 
 // =====================================================================
 // Status table
 // =====================================================================
-var table statusTable = table.new(tablePos, 2, 14, border_width=1)
-var int regBullCount = 0
-var int regBearCount = 0
-var int hidBullCount = 0
-var int hidBearCount = 0
-var int chochCount   = 0
-var int bosCount     = 0
-var string lastSignal = "None"
-var int lastSignalTime = na
-var string lastStruct = "None"
-var int lastStructTime = na
+var table t = table.new(tablePos, 2, 11, border_width=1)
+var int cDivBull = 0
+var int cDivBear = 0
+var int cChoch   = 0
+var int cBos     = 0
+var string lastDiv = "None"
+var int lastDivTime = na
+var string lastMS = "None"
+var int lastMSTime = na
 
-if longRegSignal
-    regBullCount += 1
-    lastSignal := "Bull REGULAR (reversal)"
-    lastSignalTime := time
-if shortRegSignal
-    regBearCount += 1
-    lastSignal := "Bear REGULAR (reversal)"
-    lastSignalTime := time
-if longHidSignal
-    hidBullCount += 1
-    lastSignal := "Bull HIDDEN (continuation)"
-    lastSignalTime := time
-if shortHidSignal
-    hidBearCount += 1
-    lastSignal := "Bear HIDDEN (continuation)"
-    lastSignalTime := time
+if anyDivBull
+    cDivBull += 1
+    lastDiv := divBullReg ? "Bullish Divergence" : "Bullish Hidden"
+    lastDivTime := time
+if anyDivBear
+    cDivBear += 1
+    lastDiv := divBearReg ? "Bearish Divergence" : "Bearish Hidden"
+    lastDivTime := time
 
-if structBuy or structSell
+if structBull or structBear
     isChoch = bullCHoCH or bearCHoCH
     if isChoch
-        chochCount += 1
+        cChoch += 1
     else
-        bosCount += 1
-    lastStruct := (structBuy ? "BUY - " : "SELL - ") + (isChoch ? "CHoCH" : "BOS") +
+        cBos += 1
+    lastMS := (structBull ? "Bullish " : "Bearish ") + (isChoch ? "CHoCH" : "BOS") +
          " @ " + str.tostring(brokenLevel, format.mintick)
-    lastStructTime := time
+    lastMSTime := time
 
-fmtTime(int t) => na(t) ? "-" : str.format_time(t, "yyyy-MM-dd HH:mm", syminfo.timezone)
-biasTxt = bias == 1 ? "Bullish" : bias == -1 ? "Bearish" : "Undetermined"
+fmtTime(int tm) => na(tm) ? "-" : str.format_time(tm, "yyyy-MM-dd HH:mm", syminfo.timezone)
 
 if showTable and barstate.islast
-    table.cell(statusTable, 0, 0, "PIN BAR + OBV", text_color=color.white, bgcolor=color.new(color.gray, 20))
-    table.cell(statusTable, 1, 0, "", bgcolor=color.new(color.gray, 20))
-    table.cell(statusTable, 0, 1, "Last signal", text_color=color.silver)
-    table.cell(statusTable, 1, 1, lastSignal, text_color=color.white)
-    table.cell(statusTable, 0, 2, "Signal time", text_color=color.silver)
-    table.cell(statusTable, 1, 2, fmtTime(lastSignalTime), text_color=color.white)
-    table.cell(statusTable, 0, 3, "Bull regular", text_color=color.lime)
-    table.cell(statusTable, 1, 3, str.tostring(regBullCount), text_color=color.lime)
-    table.cell(statusTable, 0, 4, "Bull hidden", text_color=color.teal)
-    table.cell(statusTable, 1, 4, str.tostring(hidBullCount), text_color=color.teal)
-    table.cell(statusTable, 0, 5, "Bear regular", text_color=color.red)
-    table.cell(statusTable, 1, 5, str.tostring(regBearCount), text_color=color.red)
-    table.cell(statusTable, 0, 6, "Bear hidden", text_color=color.orange)
-    table.cell(statusTable, 1, 6, str.tostring(hidBearCount), text_color=color.orange)
+    table.cell(t, 0, 0, "DIVERGENCE", text_color=color.white, bgcolor=color.new(color.gray, 20))
+    table.cell(t, 1, 0, "", bgcolor=color.new(color.gray, 20))
+    table.cell(t, 0, 1, "Last", text_color=color.silver)
+    table.cell(t, 1, 1, lastDiv, text_color=color.white)
+    table.cell(t, 0, 2, "Time", text_color=color.silver)
+    table.cell(t, 1, 2, fmtTime(lastDivTime), text_color=color.white)
+    table.cell(t, 0, 3, "Bullish / Bearish", text_color=color.silver)
+    table.cell(t, 1, 3, str.tostring(cDivBull) + " / " + str.tostring(cDivBear), text_color=color.white)
 
-    table.cell(statusTable, 0, 7, "MARKET STRUCTURE", text_color=color.white, bgcolor=color.new(color.gray, 20))
-    table.cell(statusTable, 1, 7, "", bgcolor=color.new(color.gray, 20))
-    table.cell(statusTable, 0, 8, "Current bias", text_color=color.silver)
-    table.cell(statusTable, 1, 8, biasTxt, text_color=bias == 1 ? color.lime : bias == -1 ? color.red : color.silver)
-    table.cell(statusTable, 0, 9, "Active swing high", text_color=color.silver)
-    table.cell(statusTable, 1, 9, na(swingHigh) ? "-" : str.tostring(swingHigh, format.mintick) + (shBroken ? " (taken)" : ""), text_color=color.white)
-    table.cell(statusTable, 0, 10, "Active swing low", text_color=color.silver)
-    table.cell(statusTable, 1, 10, na(swingLow) ? "-" : str.tostring(swingLow, format.mintick) + (slBroken ? " (taken)" : ""), text_color=color.white)
-    table.cell(statusTable, 0, 11, "Last structure event", text_color=color.silver)
-    table.cell(statusTable, 1, 11, lastStruct, text_color=color.white)
-    table.cell(statusTable, 0, 12, "Event time", text_color=color.silver)
-    table.cell(statusTable, 1, 12, fmtTime(lastStructTime), text_color=color.white)
-    table.cell(statusTable, 0, 13, "CHoCH / BOS count", text_color=color.silver)
-    table.cell(statusTable, 1, 13, str.tostring(chochCount) + " / " + str.tostring(bosCount), text_color=color.white)
+    table.cell(t, 0, 4, "MARKET STRUCTURE", text_color=color.white, bgcolor=color.new(color.gray, 20))
+    table.cell(t, 1, 4, "", bgcolor=color.new(color.gray, 20))
+    table.cell(t, 0, 5, "Current trend", text_color=color.silver)
+    table.cell(t, 1, 5, trendTxt(trend), text_color=trend == 1 ? color.lime : trend == -1 ? color.red : color.silver)
+    table.cell(t, 0, 6, "Protected high", text_color=color.silver)
+    table.cell(t, 1, 6, na(protHigh) ? "waiting for pivot" : str.tostring(protHigh, format.mintick), text_color=color.white)
+    table.cell(t, 0, 7, "Protected low", text_color=color.silver)
+    table.cell(t, 1, 7, na(protLow) ? "waiting for pivot" : str.tostring(protLow, format.mintick), text_color=color.white)
+    table.cell(t, 0, 8, "Last event", text_color=color.silver)
+    table.cell(t, 1, 8, lastMS, text_color=color.white)
+    table.cell(t, 0, 9, "Time", text_color=color.silver)
+    table.cell(t, 1, 9, fmtTime(lastMSTime), text_color=color.white)
+    table.cell(t, 0, 10, "CHoCH / BOS", text_color=color.silver)
+    table.cell(t, 1, 10, str.tostring(cChoch) + " / " + str.tostring(cBos), text_color=color.white)
