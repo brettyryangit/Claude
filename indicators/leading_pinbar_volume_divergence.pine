@@ -3,20 +3,27 @@ indicator("Leading Pin Bar + OBV Divergence Confluence", shorttitle="PinBar+OBV 
 
 // ---------- Inputs ----------
 grp_pin = "Pin Bar"
-wickBodyRatio   = input.float(2.0, "Min wick-to-body ratio", minval=1.0, step=0.1, group=grp_pin)
-maxOppWickPct   = input.float(30.0, "Max opposite wick (% of range)", minval=0.0, maxval=50.0, group=grp_pin)
-bodyNearEndPct  = input.float(30.0, "Body must sit within X% of the long-wick end", minval=5.0, maxval=50.0, group=grp_pin)
+wickBodyRatio  = input.float(2.0, "Min wick-to-body ratio", minval=1.0, step=0.1, group=grp_pin)
+maxOppWickPct  = input.float(30.0, "Max opposite wick (% of range)", minval=0.0, maxval=50.0, group=grp_pin)
+bodyNearEndPct = input.float(30.0, "Body must sit within X% of the long-wick end", minval=5.0, maxval=50.0, group=grp_pin)
 
 grp_obv = "OBV Divergence"
-pivotLeft    = input.int(5, "Pivot lookback (left bars)", minval=1, group=grp_obv)
-pivotRight   = input.int(5, "Pivot lookback (right bars)", minval=1, group=grp_obv)
-maxPivotBars = input.int(60, "Max bars between pivots", minval=5, group=grp_obv)
+pivotLeft     = input.int(5, "Pivot lookback (left bars)", minval=1, group=grp_obv)
+pivotRight    = input.int(5, "Pivot lookback (right bars)", minval=1, group=grp_obv)
+maxPivotBars  = input.int(60, "Max bars between pivots", minval=5, group=grp_obv)
+detectRegular = input.bool(true, "Detect regular divergence (reversal)", group=grp_obv)
+detectHidden  = input.bool(true, "Detect hidden divergence (continuation)", group=grp_obv)
 
 grp_ltf = "Lower-Timeframe Confirmation"
 useLTF = input.bool(true, "Require lower-timeframe OBV divergence too", group=grp_ltf)
 ltfRes = input.timeframe("15", "Lower timeframe", group=grp_ltf)
 
-// ---------- Reusable divergence calc (used locally and via request.security) ----------
+grp_disp = "Display"
+showTable = input.bool(true, "Show status table", group=grp_disp)
+tablePos  = input.string(position.top_right, "Table position",
+     options=[position.top_right, position.top_left, position.bottom_right, position.bottom_left], group=grp_disp)
+
+// ---------- Reusable divergence calc: [regBull, regBear, hidBull, hidBear] ----------
 calcDivergence(int pLeft, int pRight, int maxBars) =>
     obvLocal = ta.cum(math.sign(ta.change(close)) * volume)
     pl = ta.pivotlow(low, pLeft, pRight)
@@ -27,13 +34,16 @@ calcDivergence(int pLeft, int pRight, int maxBars) =>
     var float lhPrice = na
     var int   lhBar   = na
     var float lhObv   = na
-    bDiv = false
-    sDiv = false
+    regBull = false
+    hidBull = false
+    regBear = false
+    hidBear = false
     if not na(pl)
         pb = bar_index - pRight
         po = obvLocal[pRight]
         if not na(llPrice) and (pb - llBar) <= maxBars
-            bDiv := pl < llPrice and po > llObv
+            regBull := pl < llPrice and po > llObv  // lower low price, higher low OBV
+            hidBull := pl > llPrice and po < llObv  // higher low price, lower low OBV
         llPrice := pl
         llBar   := pb
         llObv   := po
@@ -41,11 +51,12 @@ calcDivergence(int pLeft, int pRight, int maxBars) =>
         pb = bar_index - pRight
         po = obvLocal[pRight]
         if not na(lhPrice) and (pb - lhBar) <= maxBars
-            sDiv := ph > lhPrice and po < lhObv
+            regBear := ph > lhPrice and po < lhObv  // higher high price, lower high OBV
+            hidBear := ph < lhPrice and po > lhObv  // lower high price, higher high OBV
         lhPrice := ph
         lhBar   := pb
         lhObv   := po
-    [bDiv, sDiv]
+    [regBull, regBear, hidBull, hidBear]
 
 // ---------- Pin bar detection (current timeframe) ----------
 barRange  = high - low
@@ -62,40 +73,99 @@ bearPin = barRange > 0 and upperWick >= body * wickBodyRatio and
      (math.min(close, open) - low) <= barRange * bodyNearEndPct / 100
 
 // ---------- Current-timeframe OBV divergence ----------
-[bullDivHere, bearDivHere] = calcDivergence(pivotLeft, pivotRight, maxPivotBars)
+[regBullHere, regBearHere, hidBullHere, hidBearHere] = calcDivergence(pivotLeft, pivotRight, maxPivotBars)
 
-// bullDivHere/bearDivHere fire on the pivot bar (pivotRight bars in the past); latch it
+// Each divergence type fires on its pivot bar (pivotRight bars in the past); latch it
 // forward a few bars so it can still line up with a pin bar that prints slightly later.
-var int bullDivExpiresBar = na
-var int bearDivExpiresBar = na
-if bullDivHere
-    bullDivExpiresBar := bar_index + pivotRight + 3
-if bearDivHere
-    bearDivExpiresBar := bar_index + pivotRight + 3
-recentBullDiv = not na(bullDivExpiresBar) and bar_index <= bullDivExpiresBar
-recentBearDiv = not na(bearDivExpiresBar) and bar_index <= bearDivExpiresBar
+latch(bool cond, int holdBars) =>
+    var int expires = na
+    if cond
+        expires := bar_index + holdBars
+    not na(expires) and bar_index <= expires
+
+hold = pivotRight + 3
+recentRegBull = latch(regBullHere, hold)
+recentRegBear = latch(regBearHere, hold)
+recentHidBull = latch(hidBullHere, hold)
+recentHidBear = latch(hidBearHere, hold)
 
 // ---------- Lower-timeframe OBV divergence confirmation ----------
-ltfBullDiv = false
-ltfBearDiv = false
+ltfRegBull = false
+ltfRegBear = false
+ltfHidBull = false
+ltfHidBear = false
 if useLTF
-    [b, s] = request.security(syminfo.tickerid, ltfRes, calcDivergence(pivotLeft, pivotRight, maxPivotBars), lookahead=barmerge.lookahead_off)
-    ltfBullDiv := b
-    ltfBearDiv := s
+    [rb, rr, hb, hr] = request.security(syminfo.tickerid, ltfRes, calcDivergence(pivotLeft, pivotRight, maxPivotBars), lookahead=barmerge.lookahead_off)
+    ltfRegBull := rb
+    ltfRegBear := rr
+    ltfHidBull := hb
+    ltfHidBear := hr
 
 // ---------- Confluence signals ----------
-longSignal  = bullPin and recentBullDiv and (not useLTF or ltfBullDiv)
-shortSignal = bearPin and recentBearDiv and (not useLTF or ltfBearDiv)
+longRegSignal  = detectRegular and bullPin and recentRegBull and (not useLTF or ltfRegBull)
+longHidSignal  = detectHidden  and bullPin and recentHidBull and (not useLTF or ltfHidBull)
+shortRegSignal = detectRegular and bearPin and recentRegBear and (not useLTF or ltfRegBear)
+shortHidSignal = detectHidden  and bearPin and recentHidBear and (not useLTF or ltfHidBear)
 
-plotshape(longSignal, title="Bullish Confluence", style=shape.triangleup, location=location.belowbar,
-     color=color.new(color.lime, 0), size=size.small, text="PIN+OBV")
-plotshape(shortSignal, title="Bearish Confluence", style=shape.triangledown, location=location.abovebar,
-     color=color.new(color.red, 0), size=size.small, text="PIN+OBV")
+anyLong  = longRegSignal or longHidSignal
+anyShort = shortRegSignal or shortHidSignal
 
-plotshape(bullPin and not longSignal, title="Pin Bar Only (Bull)", style=shape.circle, location=location.belowbar,
+// Regular = reversal signal (solid triangle). Hidden = continuation signal (diamond).
+plotshape(longRegSignal, title="Bullish Regular Div (reversal)", style=shape.triangleup, location=location.belowbar,
+     color=color.new(color.lime, 0), size=size.small, text="REG")
+plotshape(longHidSignal, title="Bullish Hidden Div (continuation)", style=shape.diamond, location=location.belowbar,
+     color=color.new(color.teal, 0), size=size.small, text="HID")
+plotshape(shortRegSignal, title="Bearish Regular Div (reversal)", style=shape.triangledown, location=location.abovebar,
+     color=color.new(color.red, 0), size=size.small, text="REG")
+plotshape(shortHidSignal, title="Bearish Hidden Div (continuation)", style=shape.diamond, location=location.abovebar,
+     color=color.new(color.orange, 0), size=size.small, text="HID")
+
+plotshape(bullPin and not anyLong, title="Pin Bar Only (Bull)", style=shape.circle, location=location.belowbar,
      color=color.new(color.lime, 70), size=size.tiny)
-plotshape(bearPin and not shortSignal, title="Pin Bar Only (Bear)", style=shape.circle, location=location.abovebar,
+plotshape(bearPin and not anyShort, title="Pin Bar Only (Bear)", style=shape.circle, location=location.abovebar,
      color=color.new(color.red, 70), size=size.tiny)
 
-alertcondition(longSignal, title="Bullish Pin Bar + OBV Divergence", message="Bullish pin bar with OBV divergence confluence on {{ticker}} {{interval}}")
-alertcondition(shortSignal, title="Bearish Pin Bar + OBV Divergence", message="Bearish pin bar with OBV divergence confluence on {{ticker}} {{interval}}")
+alertcondition(longRegSignal, title="Bullish Pin Bar + Regular OBV Divergence", message="Bullish pin bar + regular OBV bullish divergence (reversal) on {{ticker}} {{interval}}")
+alertcondition(longHidSignal, title="Bullish Pin Bar + Hidden OBV Divergence", message="Bullish pin bar + hidden OBV bullish divergence (continuation) on {{ticker}} {{interval}}")
+alertcondition(shortRegSignal, title="Bearish Pin Bar + Regular OBV Divergence", message="Bearish pin bar + regular OBV bearish divergence (reversal) on {{ticker}} {{interval}}")
+alertcondition(shortHidSignal, title="Bearish Pin Bar + Hidden OBV Divergence", message="Bearish pin bar + hidden OBV bearish divergence (continuation) on {{ticker}} {{interval}}")
+
+// ---------- Status table ----------
+var table statusTable = table.new(tablePos, 2, 6, border_width=1)
+var int regBullCount = 0
+var int regBearCount = 0
+var int hidBullCount = 0
+var int hidBearCount = 0
+var string lastSignal = "None"
+var int lastSignalBarTime = na
+
+if longRegSignal
+    regBullCount += 1
+    lastSignal := "Bull REGULAR (reversal)"
+    lastSignalBarTime := time
+if shortRegSignal
+    regBearCount += 1
+    lastSignal := "Bear REGULAR (reversal)"
+    lastSignalBarTime := time
+if longHidSignal
+    hidBullCount += 1
+    lastSignal := "Bull HIDDEN (continuation)"
+    lastSignalBarTime := time
+if shortHidSignal
+    hidBearCount += 1
+    lastSignal := "Bear HIDDEN (continuation)"
+    lastSignalBarTime := time
+
+if showTable and barstate.islast
+    table.cell(statusTable, 0, 0, "Last signal", text_color=color.white, bgcolor=color.new(color.gray, 30))
+    table.cell(statusTable, 1, 0, "Time", text_color=color.white, bgcolor=color.new(color.gray, 30))
+    table.cell(statusTable, 0, 1, lastSignal, text_color=color.white)
+    table.cell(statusTable, 1, 1, na(lastSignalBarTime) ? "-" : str.format_time(lastSignalBarTime, "yyyy-MM-dd HH:mm"), text_color=color.white)
+    table.cell(statusTable, 0, 2, "Bull regular", text_color=color.lime)
+    table.cell(statusTable, 1, 2, str.tostring(regBullCount), text_color=color.lime)
+    table.cell(statusTable, 0, 3, "Bull hidden", text_color=color.teal)
+    table.cell(statusTable, 1, 3, str.tostring(hidBullCount), text_color=color.teal)
+    table.cell(statusTable, 0, 4, "Bear regular", text_color=color.red)
+    table.cell(statusTable, 1, 4, str.tostring(regBearCount), text_color=color.red)
+    table.cell(statusTable, 0, 5, "Bear hidden", text_color=color.orange)
+    table.cell(statusTable, 1, 5, str.tostring(hidBearCount), text_color=color.orange)
