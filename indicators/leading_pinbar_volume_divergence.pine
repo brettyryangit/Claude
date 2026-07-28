@@ -65,6 +65,10 @@ showDivLabels   = input.bool(true, "Show divergence labels", group=grp_disp)
 showStructLabels = input.bool(true, "Show structure labels", group=grp_disp)
 labelCooldown   = input.int(20, "Min bars between labels of the same type", minval=0,
      tooltip="Stops labels stacking on top of each other on fast timeframes.", group=grp_disp)
+labelLookback   = input.int(300, "Only label the last N bars (0 = all)", minval=0,
+     tooltip="Old labels add nothing but clutter. 0 shows the full history.", group=grp_disp)
+labelOffsetAtr  = input.float(0.5, "Label distance from candle (x ATR)", minval=0.0, step=0.1,
+     tooltip="Labels are anchored to each bar's own high/low plus this offset, so they track price at any zoom.", group=grp_disp)
 lblSize         = input.string("Small", "Label size", options=["Tiny", "Small", "Normal"], group=grp_disp)
 shortText       = input.bool(false, "Use short labels", group=grp_disp)
 showTradeLines  = input.bool(true, "Draw entry / stop / target lines", group=grp_disp)
@@ -392,10 +396,15 @@ plotshape(closedFlat,  title="Scratch",     style=shape.xcross, location=locatio
 // =====================================================================
 trendTxt(int t) => t == 1 ? "Bullish" : t == -1 ? "Bearish" : "Undetermined"
 
+// Anchored with an explicit price derived from THIS bar's own high/low, so a label
+// always sits next to its candle no matter how the chart is zoomed or resized.
+inLabelWindow = labelLookback == 0 or (last_bar_index - bar_index) <= labelLookback
+
 drawLabel(bool cond, string txt, bool isBull, color col, string tip) =>
-    if cond
-        label.new(bar_index, isBull ? low : high, text=txt,
-             yloc = isBull ? yloc.belowbar : yloc.abovebar,
+    if cond and inLabelWindow
+        yPx = isBull ? low - labelOffsetAtr * atr : high + labelOffsetAtr * atr
+        label.new(bar_index, yPx, text=txt,
+             xloc=xloc.bar_index, yloc=yloc.price,
              style = isBull ? label.style_label_up : label.style_label_down,
              color=col, textcolor=color.white, size=labelSize, tooltip=tip)
 
