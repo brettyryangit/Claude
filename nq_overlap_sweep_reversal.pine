@@ -1,0 +1,186 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © brettyryan
+
+//@version=6
+indicator("NQ Overlap Sweep Reversal", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// =====================================================================================
+// WHAT THIS DOES
+// - Shades the UK/US overlap window on the chart (default 13:00-16:00, timezone below).
+// - Watches the first part of that window (default 13:00-15:00) for a "sweep": price
+//   trading beyond the Asia/UK session high or low.
+// - Flags the sweep only when a Stochastic overbought/oversold reading agrees with it.
+// - Plots a second, separate arrow the moment price actually breaks back through the
+//   sweep bar's range (the "entry trigger"), so the sweep flag and the trade trigger
+//   are never the same event.
+// - Keeps a running, on-chart hit-rate table computed from THIS chart's own historical
+//   bars - real OHLC data, not a hand-read chart log. Load it on a few years of NQ 5m
+//   history and the table is a genuine backtest of the exact rule coded below.
+// Defaults are tuned for NQ/MNQ futures (whole-index-point scale). Roughly halve
+// minMagPts for ES/MES.
+// =====================================================================================
+
+// ---------------- Inputs ----------------
+grpSess = "Sessions (times are in the timezone set below)"
+tz          = input.string("UTC+8", "Timezone (Bali = UTC+8)", group = grpSess)
+asiaSess    = input.session("2100-0900", "Asia session", group = grpSess)
+ukSess      = input.session("0700-1600", "UK session", group = grpSess)
+usSess      = input.session("1300-2200", "US session", group = grpSess)
+overlapSess = input.session("1300-1500", "Sweep watch window (first part of the overlap)", group = grpSess)
+
+grpConf = "Confirmation"
+stochLen     = input.int(14, "Stochastic length", group = grpConf)
+stochSmoothK = input.int(3, "Stoch %K smoothing", group = grpConf)
+stochSmoothD = input.int(3, "Stoch %D smoothing", group = grpConf)
+obLevel      = input.float(80, "Overbought level (for bearish sweeps)", group = grpConf)
+osLevel      = input.float(20, "Oversold level (for bullish sweeps)", group = grpConf)
+
+grpStats = "Backtest stats (uses this chart's real history)"
+minMagPts    = input.float(100, "Minimum move to count as a completed reversal (points)", group = grpStats)
+lookaheadBars= input.int(60, "Bars to allow the reversal to play out", group = grpStats)
+showTable    = input.bool(true, "Show live hit-rate table", group = grpStats)
+
+grpVis = "Visuals"
+shadeOverlap = input.bool(true, "Shade the sweep watch window", group = grpVis)
+
+// ---------------- Session detection ----------------
+inAsia    = not na(time(timeframe.period, asiaSess, tz))
+inUK      = not na(time(timeframe.period, ukSess, tz))
+inUS      = not na(time(timeframe.period, usSess, tz))
+inOverlap = not na(time(timeframe.period, overlapSess, tz))
+
+asiaStart    = inAsia and not inAsia[1]
+ukStart      = inUK and not inUK[1]
+overlapStart = inOverlap and not inOverlap[1]
+
+// ---------------- Rolling session extremes ----------------
+var float asiaHigh = na
+var float asiaLow  = na
+var float ukHigh   = na
+var float ukLow    = na
+
+if asiaStart
+    asiaHigh := high
+    asiaLow  := low
+else if inAsia
+    asiaHigh := math.max(nz(asiaHigh, high), high)
+    asiaLow  := math.min(nz(asiaLow, low), low)
+
+if ukStart
+    ukHigh := high
+    ukLow  := low
+else if inUK
+    ukHigh := math.max(nz(ukHigh, high), high)
+    ukLow  := math.min(nz(ukLow, low), low)
+
+// Reference levels frozen the moment the sweep watch window opens - these are the
+// levels that can get "swept".
+var float refHigh = na
+var float refLow  = na
+if overlapStart
+    refHigh := math.max(nz(ukHigh, -1e10), nz(asiaHigh, -1e10))
+    refLow  := math.min(nz(ukLow, 1e10), nz(asiaLow, 1e10))
+
+// ---------------- Stochastic (used only for confirmation, not plotted - you already
+// have your own Stoch pane) ----------------
+rawK = ta.stoch(close, high, low, stochLen)
+k    = ta.sma(rawK, stochSmoothK)
+d    = ta.sma(k, stochSmoothD)
+
+// ---------------- Sweep flags (reset once per day at the start of the watch window) ----------------
+var bool bearishFlagged = false
+var bool bullishFlagged = false
+var float bearSweepBarLow  = na
+var float bullSweepBarHigh = na
+var bool bearEntryDone = false
+var bool bullEntryDone = false
+
+if overlapStart
+    bearishFlagged := false
+    bullishFlagged := false
+    bearEntryDone  := false
+    bullEntryDone  := false
+    bearSweepBarLow  := na
+    bullSweepBarHigh := na
+
+bearSweepNow = inOverlap and not bearishFlagged and not na(refHigh) and high > refHigh and d > obLevel
+bullSweepNow = inOverlap and not bullishFlagged and not na(refLow)  and low  < refLow  and d < osLevel
+
+if bearSweepNow
+    bearishFlagged  := true
+    bearSweepBarLow := low
+    label.new(bar_index, high, "SWEEP HIGH\nStoch OB", style = label.style_label_down,
+         color = color.new(color.red, 0), textcolor = color.white, size = size.small)
+
+if bullSweepNow
+    bullishFlagged   := true
+    bullSweepBarHigh := high
+    label.new(bar_index, low, "SWEEP LOW\nStoch OS", style = label.style_label_up,
+         color = color.new(color.green, 0), textcolor = color.white, size = size.small)
+
+// ---------------- Entry trigger: price actually breaks back through the sweep bar ----------------
+bearEntryTrigger = bearishFlagged and not bearEntryDone and not na(bearSweepBarLow) and close < bearSweepBarLow
+bullEntryTrigger = bullishFlagged and not bullEntryDone and not na(bullSweepBarHigh) and close > bullSweepBarHigh
+
+if bearEntryTrigger
+    bearEntryDone := true
+    label.new(bar_index, low, "SHORT", style = label.style_label_up, color = color.new(color.maroon, 0),
+         textcolor = color.white, size = size.small)
+
+if bullEntryTrigger
+    bullEntryDone := true
+    label.new(bar_index, high, "LONG", style = label.style_label_down, color = color.new(color.teal, 0),
+         textcolor = color.white, size = size.small)
+
+// ---------------- Visuals ----------------
+bgcolor(shadeOverlap and inOverlap ? color.new(color.orange, 90) : na, title = "Overlap watch window")
+
+// ---------------- Live backtest stats (uses the chart's own real bars) ----------------
+bearSignalHere = bearishFlagged and not bearishFlagged[1]
+bullSignalHere = bullishFlagged and not bullishFlagged[1]
+
+bearOutcomeDue = bearSignalHere[lookaheadBars]
+bullOutcomeDue = bullSignalHere[lookaheadBars]
+
+lowestSince  = ta.lowest(low, lookaheadBars)
+highestSince = ta.highest(high, lookaheadBars)
+
+var int bearTotal = 0
+var int bearWins  = 0
+var int bullTotal = 0
+var int bullWins  = 0
+
+if bearOutcomeDue
+    bearTotal += 1
+    if (refHigh[lookaheadBars] - lowestSince) >= minMagPts
+        bearWins += 1
+
+if bullOutcomeDue
+    bullTotal += 1
+    if (highestSince - refLow[lookaheadBars]) >= minMagPts
+        bullWins += 1
+
+var table statsTable = table.new(position.top_right, 2, 4, bgcolor = color.new(color.black, 70),
+     border_width = 1, border_color = color.gray)
+
+if showTable and barstate.islast
+    table.cell(statsTable, 0, 0, "Setup", text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 1, 0, "Win rate (n)", text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 0, 1, "Bearish sweep", text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 1, 1, (bearTotal > 0 ? str.tostring(math.round(bearWins / bearTotal * 100)) + "% (" + str.tostring(bearTotal) + ")" : "n/a"),
+         text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 0, 2, "Bullish sweep", text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 1, 2, (bullTotal > 0 ? str.tostring(math.round(bullWins / bullTotal * 100)) + "% (" + str.tostring(bullTotal) + ")" : "n/a"),
+         text_color = color.white, text_size = size.small)
+    table.cell(statsTable, 0, 3, "Last " + str.tostring(lookaheadBars) + " bars may still be pending", text_color = color.gray, text_size = size.tiny)
+    table.cell(statsTable, 1, 3, "", text_color = color.white, text_size = size.small)
+
+// ---------------- Alerts ----------------
+alertcondition(bearSweepNow, title = "Bearish overlap sweep flagged",
+     message = "NQ: high swept at the UK/US overlap with Stoch overbought - watch for a short trigger")
+alertcondition(bullSweepNow, title = "Bullish overlap sweep flagged",
+     message = "NQ: low swept at the UK/US overlap with Stoch oversold - watch for a long trigger")
+alertcondition(bearEntryTrigger, title = "Short entry trigger",
+     message = "NQ: price broke back below the swept-high bar - short trigger confirmed")
+alertcondition(bullEntryTrigger, title = "Long entry trigger",
+     message = "NQ: price broke back above the swept-low bar - long trigger confirmed")
