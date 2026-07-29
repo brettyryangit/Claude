@@ -1,58 +1,36 @@
-# Trade NNNN — INSTRUMENT
+# Trade NNNN — INSTRUMENT — LONG / SHORT
 
-## Plan (written before entry)
+**Date:** | **Timeframe:** | **Size:**
 
-| Field | Value |
-|---|---|
-| Date opened | YYYY-MM-DD |
-| Instrument | |
-| Direction | long / short |
-| Timeframe | |
-| Entry | |
-| Stop | |
-| Target(s) | |
-| Size | |
-| Risk (£ / % of account) | |
-| R:R at entry | |
-
-**Setup** — what the pattern is, and what specifically triggered the entry:
-
-**Thesis** — why this should work:
-
-**Invalidation** — what has to happen for the idea to be wrong (this is what the
-stop is for, not a round number):
-
-**How I'll manage it** — decided *now*, not in the heat of it. When do I take
-partials, when does the stop move, and on what evidence:
-
-## While open
-
-| Time | Action | Reason at the time |
+| Entry | Stop | Target |
 |---|---|---|
 | | | |
 
-## Close
+**Why I entered:**
 
-| Field | Value |
-|---|---|
-| Date closed | |
-| Exit | |
-| Result (R) | |
-| Result (£) | |
-| Followed the plan? | yes / no |
+**What I'm looking for:**
 
-## Post-mortem
+**Where I'll manage it:**
 
-**What actually happened:**
+---
 
-**What I did well:**
+## Result
 
-**What I'd do differently:**
+| Exit | P&L | R | Exited at |
+|---|---|---|---|
+| | | | stop / target / discretionary |
 
-**Was this a good trade?** (A loss taken by plan is a good trade. A win taken by
-breaking the plan is not.)
+**What happened:**
 
-## The six questions
+## If I exited early
+
+*(only when the exit was discretionary)*
+
+| Stop hit? | Target hit? | Best it got to | Held to plan would have returned |
+|---|---|---|---|
+| | | | |
+
+## Six questions
 
 ```
 1. Boredom entry?              [ ] no  [ ] yes
