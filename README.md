@@ -17,6 +17,9 @@ trade did afterwards.
 
 ## Trades
 
-| # | Date | Instrument | Direction | Result | Exited at |
-|---|------|------------|-----------|--------|-----------|
-| [0001](trades/0001.md) | 2026-07-29 | MGCQ6 | Short ×3 | −$19.80 (−0.15R) | discretionary — target hit 15 min later |
+| # | Date | Instrument | Direction | Net | Exited at |
+|---|------|------------|-----------|-----|-----------|
+| [0001](trades/0001.md) | 2026-07-29 | MGC | Short ×3 | −$19.80 | by hand — target hit 15 min later |
+| [0002](trades/0002.md) | 2026-07-29 | MNQ | Long ×2 | −$112.50 | by hand — stop hit shortly after |
+
+**Running: −$132.30** · 2 trades · 0 wins · $6.80 charges

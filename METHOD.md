@@ -13,6 +13,7 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 |---|---|
 | 2026-07-29 | "I chase a little liquidity in gold. I know it goes up one way and goes down. Chase liquidity." |
 | 2026-07-29 | Entries are taken off the high timeframe. |
+| 2026-07-29 | Setups so far: liquidity grab (0001), morning star reversal (0002). |
 
 ## Open questions
 
@@ -29,8 +30,18 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 
 One row per trade. No conclusions until there are enough rows.
 
-| # | Entry TF | Exit reason | State | Moved to BE? | Out early? | If held |
-|---|---|---|---|---|---|---|
-| 0001 | HTF | 5m not driving into 1h close | panicky | no — closed instead | yes | +$273 (+2.1R) |
+| # | Instr | Entry TF | Exit reason | State | Moved to BE? | Out early? | Net | If held |
+|---|---|---|---|---|---|---|---|---|
+| 0001 | MGC | 30m | 5m not driving into 1h close | panicky | no | **yes** | &minus;$19.80 | +$268.20 |
+| 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
 
-**Running count — out early:** 1 of 1. **Cost so far:** $292.80.
+**Out early: 2 of 2.** Once it cost $288.00, once it saved $31.00.
+**Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
+**Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
+
+## What the two rows say so far
+
+Nothing yet — two trades is noise, and they point in opposite directions. The
+one thing common to both: **the exit was a decision made in the moment, and on
+neither trade was there a written rule to make it against.** That is the field
+to fill in before the next entry, not after.
