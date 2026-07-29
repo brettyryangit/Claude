@@ -12,6 +12,7 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | Date | Rule, as stated |
 |---|---|
 | 2026-07-29 | "I chase a little liquidity in gold. I know it goes up one way and goes down. Chase liquidity." |
+| 2026-07-29 | Entries are taken off the high timeframe. |
 
 ## Open questions
 
@@ -21,12 +22,15 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 2. One side per session, or both?
 3. Does session time matter?
 4. Where does the stop belong — above the sweep wick, or sized to the risk?
+5. If entries are HTF, what timeframe governs the exit? 0001 was entered on the
+   HTF and exited on the 5-minute into a 1-hour close.
 
-## Evidence log
+## Tracker
 
-Observations from trades, recorded without a conclusion until there are enough
-of them to draw one.
+One row per trade. No conclusions until there are enough rows.
 
-| Trade | Observation |
-|---|---|
-| 0001 | Move arrived in a single 5-min candle, ~15 min after entry. Cut before it. Stop never threatened. |
+| # | Entry TF | Exit reason | State | Moved to BE? | Out early? | If held |
+|---|---|---|---|---|---|---|
+| 0001 | HTF | 5m not driving into 1h close | panicky | no — closed instead | yes | +$273 (+2.1R) |
+
+**Running count — out early:** 1 of 1. **Cost so far:** $292.80.

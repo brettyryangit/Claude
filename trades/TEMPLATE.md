@@ -12,6 +12,8 @@
 
 **Where I'll manage it:**
 
+**State:** *(calm / rushed / panicky — one word is enough)*
+
 ---
 
 ## Result
