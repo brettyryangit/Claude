@@ -2,259 +2,186 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Trade 0001 — MGCQ6 Short</title>
+<title>Trade 0001 — MGC Short</title>
 <style>
   @page { size: A4; margin: 0; }
   :root {
-    --surface:  #fcfcfb;
-    --plane:    #f9f9f7;
-    --ink:      #0b0b0b;
-    --ink-2:    #52514e;
-    --muted:    #898781;
-    --rule:     #e1e0d9;
-    --baseline: #c3c2b7;
-    --loss:     #d03b3b;
-    --win:      #006300;
-    --border:   rgba(11,11,11,0.10);
+    --bg:    #000000;
+    --ink:   #ffffff;
+    --ink-2: #b9b7ae;
+    --ink-3: #6e6c66;
+    --rule:  #2a2a28;
+    --red:   #ff5a52;
+    --green: #35c759;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    width: 210mm; min-height: 297mm;
-    background: var(--surface); color: var(--ink);
-    font: 400 9.5pt/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
-    padding: 11mm 12mm 9mm;
+    width: 210mm; height: 297mm; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font: 400 9pt/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 10mm 12mm;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  h1, h2 { margin: 0; font-weight: 600; }
-  b { font-weight: 600; }
+  b { font-weight: 700; }
+  .red { color: var(--red); } .green { color: var(--green); }
 
-  .head { display: flex; justify-content: space-between; align-items: flex-end;
-          border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
-  .head h1 { font-size: 15pt; letter-spacing: -0.2px; }
-  .head .sub { color: var(--ink-2); font-size: 8.5pt; margin-top: 2px; }
-  .tag { display: inline-block; background: var(--ink); color: var(--surface);
-         padding: 1px 6px; border-radius: 3px; font-size: 7.5pt;
-         font-weight: 600; letter-spacing: 0.4px; vertical-align: 2px; }
-  .head .result { font-size: 19pt; font-weight: 600; color: var(--loss);
-                  line-height: 1; letter-spacing: -0.5px; text-align: right; }
-  .head .rlabel { font-size: 7.5pt; color: var(--muted); text-transform: uppercase;
-                  letter-spacing: 0.6px; margin-bottom: 3px; text-align: right; }
+  /* header */
+  .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .top h1 { margin: 0; font-size: 15pt; font-weight: 700; letter-spacing: -0.3px; }
+  .top .date { font-size: 9pt; color: var(--ink-3); letter-spacing: 1px; }
 
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 9px 0; }
-  .stat { background: var(--plane); border: 1px solid var(--border);
-          border-radius: 4px; padding: 7px 9px; }
-  .stat .k { font-size: 7pt; color: var(--muted); text-transform: uppercase;
-             letter-spacing: 0.5px; }
-  .stat .v { font-size: 13.5pt; font-weight: 600; letter-spacing: -0.3px;
-             margin-top: 2px; line-height: 1.1; }
-  .stat .n { font-size: 7.5pt; color: var(--ink-2); margin-top: 1px; }
-  .v.loss { color: var(--loss); } .v.win { color: var(--win); }
+  /* the punch line */
+  .punch { display: flex; align-items: flex-end; gap: 12mm;
+           margin: 5mm 0 4.5mm; padding-bottom: 4.5mm;
+           border-bottom: 1px solid var(--rule); }
+  .punch .big { font-size: 33pt; font-weight: 700; line-height: 0.9;
+                letter-spacing: -1.5px; }
+  .punch .lbl { font-size: 8pt; color: var(--ink-3); letter-spacing: 1.2px;
+                margin-bottom: 4px; }
+  .punch .mid { font-size: 21pt; font-weight: 700; line-height: 0.95;
+                letter-spacing: -0.8px; }
+  .punch .side { padding-bottom: 2px; }
+  .punch .note { font-size: 9pt; color: var(--ink-2); margin-top: 4px; }
 
-  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin: 11px 0 4px; }
-  .shot .cap { display: flex; justify-content: space-between; align-items: baseline;
-               margin-bottom: 4px; }
-  .shot .cap .t { font-size: 9pt; font-weight: 600; }
-  .shot .cap .w { font-size: 7.5pt; color: var(--muted); }
-  .shot img { width: 100%; display: block; border-radius: 4px;
-              border: 1px solid var(--border); }
-  .shot .under { font-size: 8pt; color: var(--ink-2); margin-top: 4px; }
+  /* charts */
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .shots .lbl { font-size: 8.5pt; letter-spacing: 1.2px; color: var(--ink-3);
+                margin-bottom: 2mm; }
+  .shots .frame { height: 54mm; overflow: hidden; }
+  .shots .lbl b { color: var(--ink); font-weight: 700; }
+  .shots img { width: 100%; height: 100%; display: block;
+               object-fit: cover; object-position: top center; }
 
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 9px; }
-  .field { margin-bottom: 7px; }
-  .field .k { font-size: 7pt; color: var(--muted); text-transform: uppercase;
-              letter-spacing: 0.5px; margin-bottom: 1px; }
-  .field .t { font-size: 9pt; }
-  .levels { display: flex; gap: 14px; padding: 5px 0 6px; margin-bottom: 7px;
-            border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
-            font-variant-numeric: tabular-nums; }
-  .levels div { font-size: 8.5pt; }
-  .levels .k { font-size: 7pt; color: var(--muted); text-transform: uppercase;
-               letter-spacing: 0.5px; }
-  .levels .n { font-weight: 600; }
+  /* the story */
+  .story { margin: 5mm 0 0; }
+  .line { display: flex; gap: 5mm; padding: 1.9mm 0;
+          border-bottom: 1px solid var(--rule); }
+  .line .k { flex: 0 0 22mm; font-size: 8.5pt; letter-spacing: 1.2px;
+             color: var(--ink-3); padding-top: 1.5px; }
+  .line .v { flex: 1; font-size: 9pt; }
 
-  .bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 9px;
-            padding-top: 8px; border-top: 2px solid var(--ink); }
-  .bottom h2 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.8px;
-               margin-bottom: 5px; }
-  table.t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  table.t td { font-size: 8.5pt; padding: 3px 5px 3px 0; border-bottom: 1px solid var(--rule); }
-  table.t td:last-child { text-align: right; font-weight: 600; padding-right: 0; }
-  table.t td:first-child { color: var(--ink-2); }
-  .neg { color: var(--loss); } .pos { color: var(--win); }
+  /* numbers */
+  .nums-x { display: grid; grid-template-columns: repeat(6, 1fr);
+          gap: 4mm; margin: 4mm 0 0; font-variant-numeric: tabular-nums; }
+  .nums-x .k { font-size: 7.5pt; color: var(--ink-3); letter-spacing: 1px; }
+  .nums-x .v { font-size: 11pt; font-weight: 700; letter-spacing: -0.3px;
+             margin-top: 1px; }
+  .nums-x .s { font-size: 8pt; color: var(--ink-3); }
 
-  .six { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--baseline); }
-  .six h2 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.8px;
-            margin-bottom: 5px; }
-  .qgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 6mm; }
-  .q { display: flex; align-items: baseline; gap: 6px; font-size: 8.5pt;
-       border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
-  .q .num { color: var(--muted); font-size: 7.5pt; min-width: 8px; }
-  .q .txt { flex: 1; color: var(--ink-2); }
-  .q .ans { font-weight: 600; font-size: 7.5pt; letter-spacing: 0.5px; color: var(--muted); }
-  .q.yes { border-bottom-color: var(--loss); }
-  .q.yes .txt { color: var(--ink); }
-  .q.yes .ans { color: var(--loss); }
-  .six .note { font-size: 8.5pt; color: var(--ink-2); margin-top: 6px; }
-  .six .note b { color: var(--ink); }
+  /* questions — same shape as the slide */
+  .qs { margin-top: 4.5mm; padding-top: 4mm; border-top: 1px solid var(--rule); }
+  .qs h2 { margin: 0 0 2mm; font-size: 10.5pt; font-weight: 700;
+           text-decoration: underline; text-underline-offset: 3px; }
+  .qrow { display: flex; align-items: baseline; gap: 4mm; padding: 1mm 0; }
+  .qrow .dash { color: var(--ink-3); }
+  .qrow .q { flex: 1; font-size: 9pt; color: var(--ink-2); }
+  .qrow.hit .q { color: var(--ink); font-weight: 600; }
+  .qrow .box { font-size: 11pt; line-height: 1; color: var(--ink-3); }
+  .qrow.hit .box { color: var(--red); }
 
-  .foot { margin-top: 7px; font-size: 7pt; color: var(--muted);
-          display: flex; justify-content: space-between; }
+  /* tally + kicker */
+  .end { display: flex; justify-content: space-between; align-items: flex-end;
+         margin-top: 4.5mm; padding-top: 4mm; border-top: 1px solid var(--rule); }
+  .tally { font-size: 9pt; line-height: 1.6; color: var(--ink-2); }
+  .tally b { color: var(--ink); }
+  .kicker { font-size: 12pt; font-weight: 700; text-align: right;
+            letter-spacing: -0.2px; }
+  .kicker span { display: block; font-size: 8pt; font-weight: 400;
+                 color: var(--ink-3); letter-spacing: 1px; margin-top: 2mm; }
 </style>
 </head>
 <body>
 
-<div class="head">
+<div class="top">
+  <h1>TRADE 0001 &nbsp;— &nbsp;MGC MICRO GOLD &nbsp;— &nbsp;SHORT 3</h1>
+  <div class="date">29 JUL 26</div>
+</div>
+
+<div class="punch">
   <div>
-    <h1>Trade 0001 &nbsp;·&nbsp; MGCQ6 Micro Gold &nbsp;<span class="tag">SHORT 3</span></h1>
-    <div class="sub">29 July 2026 &nbsp;·&nbsp; in 01:45, out 01:50 &nbsp;·&nbsp; off the 30-minute close</div>
+    <div class="lbl">I TOOK</div>
+    <div class="big red">&minus;$19.80</div>
   </div>
-  <div>
-    <div class="rlabel">Realised</div>
-    <div class="result">&minus;$19.80</div>
+  <div class="side">
+    <div class="lbl">IT WAS WORTH</div>
+    <div class="mid green">+$273.00</div>
+  </div>
+  <div class="side">
+    <div class="lbl">RISK ON</div>
+    <div class="mid">$129</div>
+    <div class="note">never got within 0.50 of it</div>
   </div>
 </div>
 
-<div class="stats">
-  <div class="stat">
-    <div class="k">Took</div>
-    <div class="v loss">&minus;$19.80</div>
-    <div class="n">&minus;0.15R</div>
-  </div>
-  <div class="stat">
-    <div class="k">Would have made</div>
-    <div class="v win">+$273.00</div>
-    <div class="n">+2.1R at target</div>
-  </div>
-  <div class="stat">
-    <div class="k">Swing</div>
-    <div class="v loss">&minus;$292.80</div>
-    <div class="n">taken + left behind</div>
-  </div>
-  <div class="stat">
-    <div class="k">Risk on</div>
-    <div class="v">$129.00</div>
-    <div class="n">never got close</div>
-  </div>
-</div>
-
-<div class="charts">
-  <div class="shot">
-    <div class="cap"><span class="t">Where I got in</span><span class="w">01:47</span></div>
-    <img src="img/0001-in.png" alt="MGC 5m at entry — short 3 at 4,022, stop 4,026.20, target 4,012.90">
-    <div class="under">Short at the trendline after the 01:20 spike swept the highs.
-    Stop above at 4,026.20, target below at 4,012.90.</div>
-  </div>
-  <div class="shot">
-    <div class="cap"><span class="t">What it did after</span><span class="w">02:05</span></div>
-    <img src="img/0001-after.png" alt="MGC 5m after exit — one candle from 4,021.50 down to 4,012.90, low 4,010.80">
-    <div class="under">One candle. 4,021.50 down to 4,012.90, low of 4,010.80 &mdash;
-    straight through target, five minutes after I was out.</div>
-  </div>
-</div>
-
-<div class="cols">
-
+<div class="shots">
   <div>
-    <div class="levels">
-      <div><div class="k">Entry</div><div class="n">4,022.00</div></div>
-      <div><div class="k">Stop</div><div class="n">4,026.20 <span class="neg">&minus;$129</span></div></div>
-      <div><div class="k">Target</div><div class="n">4,012.90 <span class="pos">+$273</span></div></div>
-      <div><div class="k">R:R</div><div class="n">2.1 : 1</div></div>
-    </div>
-
-    <div class="field">
-      <div class="k">Why I got in</div>
-      <div class="t">Liquidity grab. The 01:20 candle spiked to <b>4,030.30</b>,
-      took the highs, then closed straight back under the trendline. Shorted the
-      retest at 4,022. 4,026 was old support that had already broken.</div>
-    </div>
-
-    <div class="field">
-      <div class="k">What I wanted</div>
-      <div class="t">Roll back down through 4,014&ndash;4,016 and take out the
-      23:30 low at 4,013.60.</div>
-    </div>
-
-    <div class="field">
-      <div class="k">Where I'd manage it &nbsp;·&nbsp; how I felt</div>
-      <div class="t">Didn't write one. Panicky &mdash; funded account sitting
-      near break-even.</div>
-    </div>
+    <div class="lbl"><b>IN</b> &nbsp;01:45</div>
+    <div class="frame"><img src="img/0001-in.png" alt="MGC 5m at entry — short 3 at 4,022, stop 4,026.20, target 4,012.90"></div>
   </div>
-
   <div>
-    <div class="levels">
-      <div><div class="k">Exit</div><div class="n">4,022.65</div></div>
-      <div><div class="k">High after</div><div class="n">4,025.70</div></div>
-      <div><div class="k">Stop hit</div><div class="n pos">No, by 0.50</div></div>
-      <div><div class="k">Low</div><div class="n">4,010.80</div></div>
-    </div>
-
-    <div class="field">
-      <div class="k">Why I got out</div>
-      <div class="t">1-hour close coming up and the 5-minute wasn't driving into
-      it. Protecting capital.</div>
-    </div>
-
-    <div class="field">
-      <div class="k">What happened</div>
-      <div class="t">It went, on the very next candle. Ran 2.10 points past
-      target. The stop was never in danger &mdash; price topped out half a point
-      short of it.</div>
-    </div>
-
-    <div class="field">
-      <div class="k">The bit worth noticing</div>
-      <div class="t">Got in off the <b>30-minute</b>. Got out off the
-      <b>5-minute</b>. Different timeframe from the one the trade was built on.</div>
-    </div>
-  </div>
-
-</div>
-
-<div class="bottom">
-  <div>
-    <h2>The negative stat</h2>
-    <table class="t">
-      <tr><td>Closed early, before stop or target</td><td>1 of 1 &nbsp; <span class="neg">&minus;$292.80</span></td></tr>
-      <tr><td>Moved a stop to break-even</td><td>0 of 1</td></tr>
-      <tr><td>Stopped out &mdash; idea actually wrong</td><td>0 of 1</td></tr>
-      <tr><td>Let the plan finish</td><td>0 of 1</td></tr>
-    </table>
-  </div>
-
-  <div>
-    <h2>The total</h2>
-    <table class="t">
-      <tr><td>Realised</td><td class="neg">&minus;$19.80</td></tr>
-      <tr><td>Left on the table</td><td class="neg">&minus;$273.00</td></tr>
-      <tr><td>Swing against plan</td><td class="neg">&minus;$292.80</td></tr>
-      <tr><td>Setups that worked</td><td class="pos">1 of 1</td></tr>
-    </table>
+    <div class="lbl"><b>OUT 01:50</b> &nbsp;— then this happened</div>
+    <div class="frame"><img src="img/0001-after.png" alt="MGC 5m after exit — one candle from 4,021.50 to 4,012.90, low 4,010.80"></div>
   </div>
 </div>
 
-<div class="six">
-  <h2>The six questions</h2>
-  <div class="qgrid">
-    <div class="q"><span class="num">1</span><span class="txt">Punted out of boredom?</span><span class="ans">NO</span></div>
-    <div class="q"><span class="num">2</span><span class="txt">Sized up after losers?</span><span class="ans">NO</span></div>
-    <div class="q"><span class="num">3</span><span class="txt">Binned something on a small sample?</span><span class="ans">NO</span></div>
-    <div class="q"><span class="num">4</span><span class="txt">Impressed by someone's weekly %?</span><span class="ans">NO</span></div>
-    <div class="q yes"><span class="num">5</span><span class="txt">Got out on feel, not on the chart?</span><span class="ans">YES</span></div>
-    <div class="q"><span class="num">6</span><span class="txt">Stop to break-even to be safe?</span><span class="ans">NO</span></div>
+<div class="story">
+  <div class="line">
+    <div class="k">WHY IN</div>
+    <div class="v">Liquidity grab. 01:20 candle spiked <b>4,030.30</b>, took the
+    highs, closed straight back under the trendline. Short the retest at 4,022.</div>
   </div>
-  <div class="note">
-    <b>Number 5.</b> The stop was 4.20 points away and never got within 0.50 of
-    being hit. Closed it on how it felt with the hourly coming, not on anything
-    the 30-minute had done.
+  <div class="line">
+    <div class="k">WANTED</div>
+    <div class="v">Back down through 4,014&ndash;4,016 and out through the 23:30
+    low at 4,013.60.</div>
+  </div>
+  <div class="line">
+    <div class="k">WHY OUT</div>
+    <div class="v">Hourly close coming and the 5-minute wasn't driving into it.
+    Protecting capital. Felt panicky &mdash; funded account near break-even.</div>
+  </div>
+  <div class="line">
+    <div class="k">THEN</div>
+    <div class="v">Next candle. <b>4,021.50 &rarr; 4,012.90</b>, low of 4,010.80.
+    Straight through target, five minutes after I was out.</div>
+  </div>
+  <div class="line">
+    <div class="k">THE CATCH</div>
+    <div class="v">Got in off the <b>30-minute</b>. Got out off the
+    <b>5-minute</b>. Not the timeframe the trade was built on.</div>
   </div>
 </div>
 
-<div class="foot">
-  <div>Trading journal &nbsp;·&nbsp; 0001 &nbsp;·&nbsp; MGCQ6 &nbsp;·&nbsp; liquidity chase</div>
-  <div>Good idea, bad exit.</div>
+<div class="nums-x">
+  <div><div class="k">ENTRY</div><div class="v">4,022.00</div></div>
+  <div><div class="k">STOP</div><div class="v">4,026.20</div><div class="s">never hit</div></div>
+  <div><div class="k">TARGET</div><div class="v green">4,012.90</div><div class="s">hit 02:05</div></div>
+  <div><div class="k">EXIT</div><div class="v">4,022.65</div><div class="s">by hand</div></div>
+  <div><div class="k">HIGH AFTER</div><div class="v">4,025.70</div></div>
+  <div><div class="k">LOW</div><div class="v">4,010.80</div><div class="s">2.10 past</div></div>
+</div>
+
+<div class="qs">
+  <h2>How to tell if you are a cunt.</h2>
+  <div class="qrow"><span class="dash">&ndash;</span><span class="q">1. Punt a trade out of boredom?</span><span class="box">☐</span></div>
+  <div class="qrow"><span class="dash">&ndash;</span><span class="q">2. Risk more because the last few were losers?</span><span class="box">☐</span></div>
+  <div class="qrow"><span class="dash">&ndash;</span><span class="q">3. Bin something because it hasn't worked lately?</span><span class="box">☐</span></div>
+  <div class="qrow"><span class="dash">&ndash;</span><span class="q">4. Reckon the bloke up 40% in a week is any good?</span><span class="box">☐</span></div>
+  <div class="qrow hit"><span class="dash">&ndash;</span><span class="q">5. Bail on a trade for fear of what it might do?</span><span class="box">☑</span></div>
+  <div class="qrow"><span class="dash">&ndash;</span><span class="q">6. Move a stop to break-even just so you can't lose?</span><span class="box">☐</span></div>
+</div>
+
+<div class="end">
+  <div class="tally">
+    Out early: <b>1 of 1</b> &nbsp;·&nbsp; cost <b class="red">&minus;$292.80</b><br>
+    Let the plan finish: <b>0 of 1</b> &nbsp;·&nbsp; stopped out: <b>0 of 1</b><br>
+    Setups that actually worked: <b class="green">1 of 1</b>
+  </div>
+  <div class="kicker">
+    Good idea. Bad exit.
+    <span>TRADING JOURNAL &nbsp;·&nbsp; 0001</span>
+  </div>
 </div>
 
 </body>
