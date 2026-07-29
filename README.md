@@ -30,4 +30,6 @@ patterns in my own behaviour visible enough that I cannot argue with them.
 
 | # | Date | Instrument | Direction | Risk | Result | Rules kept? |
 |---|------|------------|-----------|------|--------|-------------|
-| [0001](trades/0001.md) | 2026-07-29 | MGCQ6 (Micro Gold) | Short ×3 | $129 | **open** | — |
+| [0001](trades/0001.md) | 2026-07-29 | MGCQ6 (Micro Gold) | Short ×3 | $129 | **−$19.80** (−0.15R) | no exit rule existed |
+
+See [`METHOD.md`](METHOD.md) for the strategy as it gets written down.
