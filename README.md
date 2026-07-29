@@ -28,6 +28,6 @@ patterns in my own behaviour visible enough that I cannot argue with them.
 
 ## Trades
 
-| # | Date | Instrument | Direction | Result | Rules kept? |
-|---|------|------------|-----------|--------|-------------|
-| [0001](trades/0001.md) | 2026-07-29 | TBD | TBD | **open** | — |
+| # | Date | Instrument | Direction | Risk | Result | Rules kept? |
+|---|------|------------|-----------|------|--------|-------------|
+| [0001](trades/0001.md) | 2026-07-29 | MGCQ6 (Micro Gold) | Short ×3 | $129 | **open** | — |
