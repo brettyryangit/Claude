@@ -20,9 +20,9 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-30 | **Exit rule: "if I get pushed and volume, it stays. If not, it gets cut very quickly."** Needs a definition of *push and volume* and of *quickly*. |
 | 2026-07-30 | Stop sizing is worked **off the tick amount** on scalps — a fixed cost, not an invalidation level. Structural stops (swing low / entry candle) are the other mode. |
 | 2026-07-30 | **Directional lean, not a hard rule.** Trading is off the 5m and 30m, so HTF bias does not have to be obeyed every trade. But with yesterday bullish, the weekly flipping and the monthly bullish, the lean is long and shorts get a harder look. |
-| 2026-07-30 | **Historically** most profitable when fading the market with higher contract counts and small wins — but **deliberately moving away from that.** |
-| 2026-07-30 | **Target shape: 2:1 minimum.** Risk ~$50, aiming for ~$100. Doing it properly rather than clipping small wins. |
-| 2026-07-30 | Stop width is **session-dependent.** London gold is a different animal from the US session — same instrument, different stop. |
+| 2026-07-30 | **Target shape: 2:1 minimum.** Doing it properly rather than clipping small wins. |
+| 2026-07-30 | **No typical stop.** Market structure picks the stop; I pick the risk; contracts are sized to make the two meet. |
+| 2026-07-30 | **Max loss for the day: $200.** Divisible across trades however the day goes. See [`RISK.md`](RISK.md). |
 
 ## Risk
 
@@ -41,8 +41,8 @@ trailing** drawdown, ~$1,200 remaining.
    contract so the structural stop fits the buffer. See [`RISK.md`](RISK.md).
 5. If entries are HTF, what timeframe governs the exit? 0001 was entered on the
    HTF and exited on the 5-minute into a 1-hour close.
-6. What is the typical stop width per **session**? London gold vs US gold vs
-   overnight — needs a number each so the $50 risk buys the right size.
+6. Does session change the *typical* stop the market hands out — London gold vs
+   US gold vs overnight? Not a rule to set, just something the data may show.
 
 ## Tracker
 
@@ -72,9 +72,8 @@ instrument.
 In R: cut at 0.12R on one, 0.78R on the other. Still inconsistent, but the gap
 is much smaller than the tick counts made it look.
 
-**What would evidence the 2:1 approach:** hit rate and average R per trade over
-20–30 trades. At 2:1 the break-even hit rate is 33%, so anything above that is
-an edge — and that is a number, not an argument.
+No characterisation of what kind of trader this is until the data says so. See
+the review section below.
 
 ### Behaviour counts
 
@@ -83,3 +82,19 @@ an edge — and that is a number, not an argument.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
 **Risk per trade: $129, $141.50** — both ~11% of the remaining drawdown.
 **Passed setups: 1.** Saved $33.
+
+## Review at 20–50 trades
+
+No conclusions before then. Log the trades, keep the columns filled, and answer
+these with data rather than with two samples:
+
+- Hit rate, and average R per trade.
+- Is 2:1 actually being achieved, or are targets getting cut short?
+- Which setups win — liquidity grab, morning star, fade, continuation?
+- Long vs short: is one side carrying the results?
+- Session: does London / US / overnight change the outcome?
+- Instrument: gold vs Nasdaq.
+- Does the exit rule make or lose money once it has a definition?
+- Do the passed trades save more than they cost?
+
+Then tailor to whatever the numbers actually show.
