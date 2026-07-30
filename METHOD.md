@@ -14,6 +14,14 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-29 | "I chase a little liquidity in gold. I know it goes up one way and goes down. Chase liquidity." |
 | 2026-07-29 | Entries are taken off the high timeframe. |
 | 2026-07-29 | Setups so far: liquidity grab (0001), morning star reversal (0002). |
+| 2026-07-30 | Stops go **under the swing low or under the entry candle**. |
+| 2026-07-30 | Smallest size is 1 contract, so stop distance is the only lever — MGC $1/tick, MNQ $0.50/tick. Not willing to run a 200-tick stop to risk $200 on gold. |
+| 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. *(unfinished — needs the rest of the sentence)* |
+
+## Risk
+
+Account and sizing live in [`RISK.md`](RISK.md). $50k account, $2,000 max
+drawdown, ~$1,200 remaining.
 
 ## Open questions
 
@@ -23,6 +31,8 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 2. One side per session, or both?
 3. Does session time matter?
 4. Where does the stop belong — above the sweep wick, or sized to the risk?
+   Partly answered: under the swing low / entry candle, with size cut to 1
+   contract so the structural stop fits the buffer. See [`RISK.md`](RISK.md).
 5. If entries are HTF, what timeframe governs the exit? 0001 was entered on the
    HTF and exited on the 5-minute into a 1-hour close.
 
@@ -38,3 +48,4 @@ One row per trade. No conclusions until there are enough rows.
 **Out early: 2 of 2.** Once it cost $288.00, once it saved $31.00.
 **Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
+**Risk per trade: $129, $141.50** — both ~11% of the remaining drawdown.

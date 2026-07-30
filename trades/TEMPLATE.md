@@ -1,26 +1,32 @@
 # Trade NNNN — INSTRUMENT — LONG / SHORT
 
-**Date:** | **Timeframe:** | **Size:**
+**Date/time:** | **Session:** | **Entry TF:** | **Size:**
 
 | Entry | Stop | Target |
 |---|---|---|
 | | | |
 
+**Risk:** $___ · ___% of remaining drawdown · R:R ___ : 1
+
 **Why I entered:**
 
 **What I'm looking for:**
 
-**Where I'll manage it:**
+**Stop is based on:** *(swing low / entry candle low / structure — one phrase)*
 
-**State:** *(calm / rushed / panicky — one word is enough)*
+**Exit rule:** *(written before entry — what gets me out, other than stop or target)*
+
+**State:** *(calm / rushed / panicky)*
 
 ---
 
 ## Result
 
-| Exit | P&L | R | Exited at |
-|---|---|---|---|
-| | | | stop / target / discretionary |
+| Exit | Gross | Charges | Net | R | Exited at |
+|---|---|---|---|---|---|
+| | | | | | stop / target / rule / discretionary |
+
+**MAE while I held it:** ___ pts *(furthest offside)*
 
 **What happened:**
 
