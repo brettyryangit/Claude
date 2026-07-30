@@ -21,7 +21,7 @@
   .page {
     width: 210mm; height: 297mm;
     color: var(--ink);
-    padding: 20mm 18mm;
+    padding: 16mm 18mm;
     page-break-after: always;
     position: relative;
   }
@@ -39,7 +39,7 @@
   .cover .meta { font-size: 10pt; color: var(--ink-3); letter-spacing: 1px; }
 
   /* ---- contents ---- */
-  .contents h1 { font-size: 22pt; font-weight: 700; letter-spacing: 1px; margin: 0 0 14mm; }
+  .contents h1 { font-size: 22pt; font-weight: 700; letter-spacing: 1px; margin: 4mm 0 14mm; }
   .toc-row { display: flex; align-items: baseline; gap: 4mm; padding: 5mm 0; border-bottom: 1px solid var(--rule); }
   .toc-row .n { font-size: 10pt; color: var(--ink-3); width: 10mm; }
   .toc-row .t { flex: 1; font-size: 13pt; }
@@ -47,34 +47,53 @@
   .toc-row .p { font-size: 12pt; color: var(--ink-2); }
 
   /* ---- trade page ---- */
-  .trade .top { border-bottom: 2px solid var(--ink); padding-bottom: 6mm; margin-bottom: 8mm; }
+  .trade .top { border-bottom: 2px solid var(--ink); padding-bottom: 5mm; margin-bottom: 6mm; }
   .trade .top .label { font-size: 9pt; color: var(--ink-3); letter-spacing: 2px; }
-  .trade .top h1 { font-size: 24pt; font-weight: 700; letter-spacing: -0.5px; margin: 2mm 0; }
+  .trade .top h1 { font-size: 21pt; font-weight: 700; letter-spacing: -0.5px; margin: 2mm 0; }
   .trade .top .meta { font-size: 10.5pt; color: var(--ink-2); }
 
-  .levels { display: flex; gap: 12mm; margin-bottom: 7mm; }
-  .levels div .k { font-size: 8.5pt; color: var(--ink-3); letter-spacing: 1px; }
-  .levels div .v { font-size: 15pt; font-weight: 700; margin-top: 1mm; }
+  .shots .cap { font-size: 8pt; color: var(--ink-3); letter-spacing: 1px; margin-bottom: 1.5mm; }
+  .shots .frame { width: 100%; height: 52mm; overflow: hidden; border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3.5mm; }
+  .shots img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 
-  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 7mm; }
-  .shots .cap { font-size: 8pt; color: var(--ink-3); letter-spacing: 1px; margin-bottom: 2mm; }
-  .shots .frame { height: 42mm; overflow: hidden; border: 1px solid var(--border); border-radius: 3px; }
-  .shots img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .block { margin-bottom: 4mm; }
+  .block .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 1.5mm; }
+  .block .v { font-size: 10.5pt; }
 
-  .block { margin-bottom: 6mm; }
-  .block .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 2mm; }
-  .block .v { font-size: 11pt; }
-
-  .pnl { display: flex; align-items: baseline; gap: 6mm; margin: 7mm 0; padding: 5mm 0;
+  .pnl { display: flex; align-items: baseline; gap: 6mm; margin: 4mm 0; padding: 3mm 0;
          border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
   .pnl .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; }
-  .pnl .big { font-size: 28pt; font-weight: 700; letter-spacing: -0.5px; }
+  .pnl .big { font-size: 25pt; font-weight: 700; letter-spacing: -0.5px; }
 
   .notes ul { margin: 0; padding-left: 5mm; }
-  .notes li { font-size: 10.5pt; margin-bottom: 2mm; color: var(--ink-2); }
+  .notes li { font-size: 10.5pt; margin-bottom: 1.5mm; color: var(--ink-2); }
 
-  .foot { position: absolute; bottom: 14mm; left: 18mm; right: 18mm; display: flex;
+  .foot { position: absolute; bottom: 12mm; left: 18mm; right: 18mm; display: flex;
           justify-content: space-between; font-size: 8.5pt; color: var(--ink-3); letter-spacing: 1px; }
+
+  /* ---- left on the table ---- */
+  .review h1 { font-size: 22pt; font-weight: 700; letter-spacing: 1px; margin: 4mm 0 3mm; }
+  .review .dek { font-size: 11pt; color: var(--ink-2); margin-bottom: 10mm; max-width: 150mm; }
+  .headline { display: flex; align-items: baseline; gap: 6mm; padding: 6mm 0; margin-bottom: 10mm;
+              border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+  .headline .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; max-width: 40mm; }
+  .headline .big { font-size: 30pt; font-weight: 700; letter-spacing: -0.5px; }
+
+  .rt-card { border: 1px solid var(--border); border-radius: 4px; padding: 6mm; margin-bottom: 6mm; }
+  .rt-card .name { font-size: 13pt; font-weight: 700; margin-bottom: 4mm; }
+  .rt-row { display: flex; gap: 10mm; margin-bottom: 2mm; }
+  .rt-row .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1px; width: 34mm; padding-top: 1mm; }
+  .rt-row .v { font-size: 13pt; font-weight: 700; }
+  .rt-row .note { font-size: 10pt; color: var(--ink-2); font-weight: 400; margin-left: 3mm; }
+
+  /* ---- running tally ---- */
+  .tally h1 { font-size: 22pt; font-weight: 700; letter-spacing: 1px; margin: 4mm 0 12mm; }
+  .tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 10mm; }
+  .tstat { border: 1px solid var(--border); border-radius: 4px; padding: 7mm; }
+  .tstat .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 3mm; }
+  .tstat .v { font-size: 24pt; font-weight: 700; letter-spacing: -0.5px; }
+  .tstat .n { font-size: 9.5pt; color: var(--ink-2); margin-top: 2mm; }
+  .tally .footnote { font-size: 10pt; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: 6mm; margin-top: 4mm; }
 </style>
 </head>
 <body>
@@ -104,6 +123,16 @@
     <div class="t">Trade 0002<div class="sub">MNQ Micro Nasdaq — Long</div></div>
     <div class="p">4</div>
   </div>
+  <div class="toc-row">
+    <div class="n">03</div>
+    <div class="t">Left on the Table<div class="sub">Trades that would have been better held</div></div>
+    <div class="p">5</div>
+  </div>
+  <div class="toc-row">
+    <div class="n">04</div>
+    <div class="t">Running Tally<div class="sub">Where the account stands</div></div>
+    <div class="p">6</div>
+  </div>
 </div>
 
 <!-- PAGE 3 — TRADE 0001 -->
@@ -114,22 +143,11 @@
     <div class="meta">29 July 2026 · 01:45 &ndash; 01:50</div>
   </div>
 
-  <div class="levels">
-    <div><div class="k">ENTRY</div><div class="v">4,022.00</div></div>
-    <div><div class="k">EXIT</div><div class="v">4,022.50</div></div>
-    <div><div class="k">STOP</div><div class="v">4,026.20</div></div>
-    <div><div class="k">TARGET</div><div class="v">4,012.90</div></div>
-  </div>
-
   <div class="shots">
-    <div>
-      <div class="cap">BEFORE — AT ENTRY, 01:47</div>
-      <div class="frame"><img src="trades/img/0001-in.png" alt="MGC 5m at entry"></div>
-    </div>
-    <div>
-      <div class="cap">AFTER — 02:05</div>
-      <div class="frame"><img src="trades/img/0001-after.png" alt="MGC 5m after exit, target hit"></div>
-    </div>
+    <div class="cap">BEFORE — AT ENTRY, 01:47</div>
+    <div class="frame"><img src="trades/img/0001-in.png" alt="MGC 5m at entry"></div>
+    <div class="cap">AFTER — 02:05</div>
+    <div class="frame"><img src="trades/img/0001-after.png" alt="MGC 5m after exit, target hit"></div>
   </div>
 
   <div class="block">
@@ -170,22 +188,11 @@
     <div class="meta">29 July 2026 · 23:12 &ndash; 23:15</div>
   </div>
 
-  <div class="levels">
-    <div><div class="k">ENTRY</div><div class="v">27,600.38</div></div>
-    <div><div class="k">EXIT</div><div class="v">27,572.75</div></div>
-    <div><div class="k">STOP</div><div class="v">27,565.00</div></div>
-    <div><div class="k">TARGET</div><div class="v">27,654.75</div></div>
-  </div>
-
   <div class="shots">
-    <div>
-      <div class="cap">BEFORE — AT ENTRY, 23:12</div>
-      <div class="frame"><img src="trades/img/0002-open.webp" alt="MNQ 15m at entry"></div>
-    </div>
-    <div>
-      <div class="cap">AFTER — PRICE THROUGH THE STOP</div>
-      <div class="frame"><img src="trades/img/0002-stopped.webp" alt="MNQ 15m after exit, price through the stop"></div>
-    </div>
+    <div class="cap">BEFORE — AT ENTRY, 23:12</div>
+    <div class="frame"><img src="trades/img/0002-open.webp" alt="MNQ 15m at entry"></div>
+    <div class="cap">AFTER — PRICE THROUGH THE STOP</div>
+    <div class="frame"><img src="trades/img/0002-stopped.webp" alt="MNQ 15m after exit, price through the stop"></div>
   </div>
 
   <div class="block">
@@ -216,6 +223,75 @@
   </div>
 
   <div class="foot"><span>TRADING JOURNAL</span><span>4</span></div>
+</div>
+
+<!-- PAGE 5 — LEFT ON THE TABLE -->
+<div class="page review">
+  <h1>LEFT ON THE TABLE</h1>
+  <div class="dek">Not missed trades — trades that were taken and closed by hand.
+  What each one actually made, against what holding to plan would have made.</div>
+
+  <div class="headline">
+    <div class="k">HOLDING TO PLAN, ACROSS BOTH TRADES, WOULD HAVE NET</div>
+    <div class="big" style="color:var(--green)">+$257.00 more</div>
+  </div>
+
+  <div class="rt-card">
+    <div class="name">Trade 0001 — MGC Short</div>
+    <div class="rt-row"><div class="k">CLOSED</div><div class="v" style="color:var(--red)">&minus;$19.80</div></div>
+    <div class="rt-row"><div class="k">HELD TO PLAN</div><div class="v" style="color:var(--green)">+$268.20</div></div>
+    <div class="rt-row"><div class="k">DIFFERENCE</div><div class="v">+$288.00<span class="note">holding would have been better</span></div></div>
+  </div>
+
+  <div class="rt-card">
+    <div class="name">Trade 0002 — MNQ Long</div>
+    <div class="rt-row"><div class="k">CLOSED</div><div class="v" style="color:var(--red)">&minus;$112.50</div></div>
+    <div class="rt-row"><div class="k">HELD TO PLAN</div><div class="v" style="color:var(--red)">&minus;$143.50</div></div>
+    <div class="rt-row"><div class="k">DIFFERENCE</div><div class="v">&minus;$31.00<span class="note">closing early was better</span></div></div>
+  </div>
+
+  <div class="block" style="margin-top:8mm">
+    <div class="k">SO FAR</div>
+    <div class="v">Out early on both trades. Once it cost $288.00. Once it saved $31.00.</div>
+  </div>
+
+  <div class="foot"><span>TRADING JOURNAL</span><span>5</span></div>
+</div>
+
+<!-- PAGE 6 — RUNNING TALLY -->
+<div class="page tally">
+  <h1>RUNNING TALLY</h1>
+
+  <div class="tgrid">
+    <div class="tstat">
+      <div class="k">NET P&amp;L</div>
+      <div class="v" style="color:var(--red)">&minus;$132.30</div>
+      <div class="n">2 trades taken</div>
+    </div>
+    <div class="tstat">
+      <div class="k">WIN RATE</div>
+      <div class="v">0%</div>
+      <div class="n">0 wins · 2 losses</div>
+    </div>
+    <div class="tstat">
+      <div class="k">CHARGES PAID</div>
+      <div class="v">$6.80</div>
+      <div class="n">across both trades</div>
+    </div>
+    <div class="tstat">
+      <div class="k">PASSED / OBSERVED</div>
+      <div class="v">1 / 1</div>
+      <div class="n">0003 passed, saved $33.00 · 0004 observed, reference only</div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    &minus;$132.30 against a $100 max loss per day and ~$1,200 remaining on the
+    $2,000 trailing drawdown. No conclusions drawn — this page updates as
+    trades accumulate, reviewed properly at 20&ndash;50.
+  </div>
+
+  <div class="foot"><span>TRADING JOURNAL</span><span>6</span></div>
 </div>
 
 </body>
