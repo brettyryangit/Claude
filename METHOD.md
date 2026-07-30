@@ -20,8 +20,8 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 
 ## Risk
 
-Account and sizing live in [`RISK.md`](RISK.md). $50k account, $2,000 max
-drawdown, ~$1,200 remaining.
+Account and sizing live in [`RISK.md`](RISK.md). $50k account, **$2,000
+trailing** drawdown, ~$1,200 remaining.
 
 ## Open questions
 

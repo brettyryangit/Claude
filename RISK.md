@@ -5,12 +5,30 @@
 | | |
 |---|---|
 | Account size | **$50,000** |
-| Max drawdown | **$2,000** |
+| Max drawdown | **$2,000**, **trailing** |
 | High-water mark reached | +$700–800 |
-| Drawdown remaining | **~$1,200** *(as stated)* |
+| Floor implied by that HWM | ~$48,800 |
+| Drawdown remaining | **~$1,200** *(as stated — pending screenshot)* |
 
-**Open question:** is the $2,000 drawdown **trailing** or **static**? It changes
-the remaining buffer materially, and everything below is scaled off it.
+### What trailing means here
+
+The floor tracks the high-water mark and **never comes back down**. Every new
+equity high ratchets it up permanently.
+
+So giving back profit does not return you to where you started — it costs buffer
+for good. Going +$800 and back to flat moved the floor from $48,000 to $48,800:
+**$800 of room gone, P&L unchanged.**
+
+That is a real mechanical cost, not a feeling. It is also not an argument for
+bailing out of trades early — the lever is size, so a normal loss doesn't eat
+the buffer in the first place.
+
+### One figure to check against the screenshot
+
+Journal shows &minus;$132.30 realised. If the HWM was +$800, the floor sits at
+$48,800 and the balance should be ~$50,668 — about **$1,868** of room, not
+$1,200. Either the HWM was higher than +$800, or there are trades before this
+journal started. The screenshot settles which.
 
 ## The binding constraint
 
