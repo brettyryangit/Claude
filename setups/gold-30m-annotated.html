@@ -1,0 +1,144 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Gold 30m annotated</title>
+<style>
+  @page { size: 2000px 1164px; margin: 0; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; padding:0; background:#02202f; }
+  .wrap { position:relative; width:2000px; height:1164px; }
+  .wrap img { position:absolute; inset:0; width:2000px; height:1164px; display:block; }
+  svg { position:absolute; inset:0; width:2000px; height:1164px; }
+  text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-weight:700; }
+</style></head>
+<body>
+<div class="wrap">
+  <img src="gold-30m-jul17-30.webp" alt="Gold spot 30m, 17-30 July 2026">
+  <svg viewBox="0 0 2000 1164">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,1 L9,5 L0,9 z" fill="#ff8a80"/>
+      </marker>
+      <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,1 L9,5 L0,9 z" fill="#7bf5a0"/>
+      </marker>
+      <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,1 L9,5 L0,9 z" fill="#a5b4fc"/>
+      </marker>
+      <g id="star">
+        <polygon points="0,-13 3.8,-4.2 13,-4.2 5.6,1.9 8.4,11 0,5.6 -8.4,11 -5.6,1.9 -13,-4.2 -3.8,-4.2"/>
+      </g>
+    </defs>
+
+    <!-- ============ TRADE ZONES ============ -->
+    <!-- T1 SHORT off the 4,165.7 sweep -->
+    <rect x="892" y="190.4" width="278" height="77.3" fill="#ff5a52" opacity="0.20"/>
+    <rect x="892" y="267.7" width="278" height="287.4" fill="#35c759" opacity="0.16"/>
+    <!-- T2 LONG off the 4,022 sweep -->
+    <rect x="1180" y="496.1" width="88" height="140.5" fill="#35c759" opacity="0.16"/>
+    <rect x="1180" y="636.6" width="88" height="70.3" fill="#ff5a52" opacity="0.20"/>
+    <!-- T3 LONG off the 3,995.8 sweep -->
+    <rect x="1812" y="461.0" width="108" height="267.0" fill="#35c759" opacity="0.16"/>
+    <rect x="1812" y="728.0" width="108" height="70.2" fill="#ff5a52" opacity="0.20"/>
+
+    <!-- ============ LIQUIDITY LEVELS ============ -->
+    <g stroke="#ffd54a" stroke-width="2" stroke-dasharray="9 6">
+      <line x1="752" y1="195.0"  x2="1925" y2="195.0"/>
+      <line x1="752" y1="285.3"  x2="1925" y2="285.3"/>
+      <line x1="1300" y1="369.6" x2="1925" y2="369.6"/>
+      <line x1="1040" y1="601.5" x2="1925" y2="601.5"/>
+      <line x1="1120" y1="699.9" x2="1925" y2="699.9"/>
+      <line x1="1770" y1="791.2" x2="1925" y2="791.2"/>
+      <line x1="150" y1="889.0"  x2="620"  y2="889.0"/>
+    </g>
+    <g font-size="15" fill="#ffd54a">
+      <text x="1190" y="189">LIQ  4,165.7   swept high</text>
+      <text x="1190" y="279">LIQ  4,140   equal highs — taken</text>
+      <text x="1420" y="363">LIQ  4,116   equal highs</text>
+      <text x="1300" y="595">LIQ  4,050   equal lows shelf</text>
+      <text x="1300" y="694">LIQ  4,022   equal lows</text>
+      <text x="1600" y="785">LIQ  3,996   swept low</text>
+      <text x="200" y="883">LIQ  3,968   swept low</text>
+    </g>
+
+    <!-- ============ FIBONACCI 3,999.8 -> 4,165.7 ============ -->
+    <g stroke="#a5b4fc" stroke-width="1.6" opacity="0.95">
+      <line x1="880" y1="417.8" x2="1290" y2="417.8"/>
+      <line x1="880" y1="486.4" x2="1290" y2="486.4"/>
+      <line x1="880" y1="555.1" x2="1290" y2="555.1" stroke-width="3"/>
+      <line x1="880" y1="653.2" x2="1290" y2="653.2"/>
+    </g>
+    <g font-size="14" fill="#c7d2fe">
+      <text x="1296" y="422">0.382  4,102</text>
+      <text x="1296" y="491">0.5    4,083</text>
+      <text x="1296" y="560" font-size="16" fill="#e0e7ff">0.618  4,063</text>
+      <text x="1296" y="658">0.786  4,035</text>
+      <text x="880" y="410" font-size="13" fill="#a5b4fc">FIB  3,999.8 → 4,165.7</text>
+    </g>
+
+    <!-- impulse leg the fib is drawn from -->
+    <line x1="558" y1="775" x2="864" y2="202" stroke="#a5b4fc" stroke-width="2"
+          stroke-dasharray="7 5" opacity="0.85" marker-end="url(#ab)"/>
+    <text x="566" y="762" font-size="13" fill="#a5b4fc" transform="rotate(-28 566 762)">impulse leg — fib measured off this</text>
+
+    <!-- ============ STARS ============ -->
+    <!-- evening star at the 4,165.7 sweep -->
+    <use href="#star" x="0" y="0" transform="translate(872,172)" fill="#ff5a52"/>
+    <text x="890" y="163" font-size="16" fill="#ff8a80">EVENING STAR</text>
+    <text x="890" y="181" font-size="13" fill="#ff8a80">sweep of 4,140 highs</text>
+    <!-- morning star at 4,022 -->
+    <use href="#star" transform="translate(1160,730)" fill="#35c759"/>
+    <text x="1178" y="742" font-size="16" fill="#7bf5a0">MORNING STAR</text>
+    <!-- morning star at 3,995.8 -->
+    <use href="#star" transform="translate(1797,822)" fill="#35c759"/>
+    <text x="1600" y="852" font-size="16" fill="#7bf5a0">MORNING STAR</text>
+    <text x="1600" y="870" font-size="13" fill="#7bf5a0">sweep of 4,015 lows → 4,116</text>
+    <!-- morning star at 3,968 -->
+    <use href="#star" transform="translate(300,915)" fill="#35c759"/>
+    <text x="320" y="922" font-size="15" fill="#7bf5a0">MORNING STAR</text>
+
+    <!-- ============ SWEEP ARROWS ============ -->
+    <g fill="none" stroke-width="2.5">
+      <path d="M846,225 Q866,205 872,200" stroke="#ff8a80" marker-end="url(#ar)"/>
+      <path d="M1120,745 Q1145,750 1157,712" stroke="#7bf5a0" marker-end="url(#ag)"/>
+      <path d="M1760,830 Q1785,835 1794,802" stroke="#7bf5a0" marker-end="url(#ag)"/>
+    </g>
+
+    <!-- ============ TRADE LABELS ============ -->
+    <!-- T1 -->
+    <g font-size="14">
+      <text x="900" y="262" fill="#ffffff">SHORT 1 · entry 4,145</text>
+      <text x="900" y="208" fill="#ff8a80">stop 4,167</text>
+      <text x="900" y="548" fill="#7bf5a0">target 4,063 = the 0.618  ·  4.3:1</text>
+    </g>
+    <!-- T2 -->
+    <g font-size="13">
+      <text x="1174" y="641" fill="#ffffff" text-anchor="end">LONG 2 · entry 4,040</text>
+      <text x="1272" y="722" fill="#ff8a80">stop 4,020</text>
+      <text x="1174" y="500" fill="#7bf5a0" text-anchor="end">target 4,080 hit · 2:1</text>
+    </g>
+    <!-- T3 -->
+    <g font-size="14">
+      <text x="1806" y="742" fill="#ffffff" text-anchor="end">LONG 3 · entry 4,014  ◀ best trade on the chart</text>
+      
+      <text x="1806" y="806" fill="#ff8a80" text-anchor="end">stop 3,994</text>
+      <text x="1806" y="440" fill="#7bf5a0" text-anchor="end">target 4,090 hit  ·  3.8:1  ·  then ran to 4,116</text>
+    </g>
+
+    <!-- ============ LEGEND ============ -->
+    <g>
+      <rect x="48" y="926" width="600" height="196" rx="8" fill="#001721" opacity="0.96" stroke="#2b4a5c"/>
+      <text x="68" y="954" font-size="16" fill="#ffffff">Gold spot · 30m · 17–30 Jul 2026</text>
+      <line x1="68" y1="978" x2="108" y2="978" stroke="#ffd54a" stroke-width="2" stroke-dasharray="9 6"/>
+      <text x="120" y="983" font-size="14" fill="#ffd54a">liquidity level — equal highs / lows</text>
+      <line x1="68" y1="1006" x2="108" y2="1006" stroke="#a5b4fc" stroke-width="3"/>
+      <text x="120" y="1011" font-size="14" fill="#c7d2fe">fib retracement (0.618 emphasised)</text>
+      <use href="#star" transform="translate(88,1034) scale(0.8)" fill="#35c759"/>
+      <text x="120" y="1039" font-size="14" fill="#7bf5a0">morning star — long reversal</text>
+      <use href="#star" transform="translate(88,1062) scale(0.8)" fill="#ff5a52"/>
+      <text x="120" y="1067" font-size="14" fill="#ff8a80">evening star — short reversal</text>
+      <rect x="70" y="1084" width="16" height="14" fill="#35c759" opacity="0.4"/>
+      <rect x="90" y="1084" width="16" height="14" fill="#ff5a52" opacity="0.4"/>
+      <text x="120" y="1096" font-size="14" fill="#cfd8dc">target zone / stop zone</text>
+    </g>
+  </svg>
+</div>
+</body></html>
