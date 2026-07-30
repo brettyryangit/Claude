@@ -6,13 +6,14 @@
 <style>
   @page { size: A4; margin: 0; }
   :root {
-    --bg:    #000000;
-    --ink:   #ffffff;
-    --ink-2: #b9b7ae;
-    --ink-3: #6e6c66;
-    --rule:  #2a2a28;
-    --red:   #ff5a52;
-    --green: #35c759;
+    --bg:    #fcfcfb;
+    --ink:   #0b0b0b;
+    --ink-2: #52514e;
+    --ink-3: #898781;
+    --rule:  #e1e0d9;
+    --border: #c3c2b7;
+    --red:   #d03b3b;
+    --green: #0ca30c;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -46,26 +47,31 @@
   .toc-row .p { font-size: 12pt; color: var(--ink-2); }
 
   /* ---- trade page ---- */
-  .trade .top { border-bottom: 2px solid var(--ink); padding-bottom: 6mm; margin-bottom: 10mm; }
+  .trade .top { border-bottom: 2px solid var(--ink); padding-bottom: 6mm; margin-bottom: 8mm; }
   .trade .top .label { font-size: 9pt; color: var(--ink-3); letter-spacing: 2px; }
   .trade .top h1 { font-size: 24pt; font-weight: 700; letter-spacing: -0.5px; margin: 2mm 0; }
   .trade .top .meta { font-size: 10.5pt; color: var(--ink-2); }
 
-  .levels { display: flex; gap: 12mm; margin-bottom: 10mm; }
+  .levels { display: flex; gap: 12mm; margin-bottom: 7mm; }
   .levels div .k { font-size: 8.5pt; color: var(--ink-3); letter-spacing: 1px; }
   .levels div .v { font-size: 15pt; font-weight: 700; margin-top: 1mm; }
 
-  .block { margin-bottom: 8mm; }
-  .block .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 2mm; }
-  .block .v { font-size: 11.5pt; }
+  .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 7mm; }
+  .shots .cap { font-size: 8pt; color: var(--ink-3); letter-spacing: 1px; margin-bottom: 2mm; }
+  .shots .frame { height: 42mm; overflow: hidden; border: 1px solid var(--border); border-radius: 3px; }
+  .shots img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
 
-  .pnl { display: flex; align-items: baseline; gap: 6mm; margin: 10mm 0; padding: 6mm 0;
+  .block { margin-bottom: 6mm; }
+  .block .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 2mm; }
+  .block .v { font-size: 11pt; }
+
+  .pnl { display: flex; align-items: baseline; gap: 6mm; margin: 7mm 0; padding: 5mm 0;
          border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
   .pnl .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; }
-  .pnl .big { font-size: 30pt; font-weight: 700; letter-spacing: -0.5px; }
+  .pnl .big { font-size: 28pt; font-weight: 700; letter-spacing: -0.5px; }
 
   .notes ul { margin: 0; padding-left: 5mm; }
-  .notes li { font-size: 11pt; margin-bottom: 2.5mm; color: var(--ink-2); }
+  .notes li { font-size: 10.5pt; margin-bottom: 2mm; color: var(--ink-2); }
 
   .foot { position: absolute; bottom: 14mm; left: 18mm; right: 18mm; display: flex;
           justify-content: space-between; font-size: 8.5pt; color: var(--ink-3); letter-spacing: 1px; }
@@ -115,6 +121,17 @@
     <div><div class="k">TARGET</div><div class="v">4,012.90</div></div>
   </div>
 
+  <div class="shots">
+    <div>
+      <div class="cap">BEFORE — AT ENTRY, 01:47</div>
+      <div class="frame"><img src="trades/img/0001-in.png" alt="MGC 5m at entry"></div>
+    </div>
+    <div>
+      <div class="cap">AFTER — 02:05</div>
+      <div class="frame"><img src="trades/img/0001-after.png" alt="MGC 5m after exit, target hit"></div>
+    </div>
+  </div>
+
   <div class="block">
     <div class="k">WHY I TOOK IT</div>
     <div class="v">Liquidity grab short. The 01:20 candle spiked to 4,030.30, took the
@@ -158,6 +175,17 @@
     <div><div class="k">EXIT</div><div class="v">27,572.75</div></div>
     <div><div class="k">STOP</div><div class="v">27,565.00</div></div>
     <div><div class="k">TARGET</div><div class="v">27,654.75</div></div>
+  </div>
+
+  <div class="shots">
+    <div>
+      <div class="cap">BEFORE — AT ENTRY, 23:12</div>
+      <div class="frame"><img src="trades/img/0002-open.webp" alt="MNQ 15m at entry"></div>
+    </div>
+    <div>
+      <div class="cap">AFTER — PRICE THROUGH THE STOP</div>
+      <div class="frame"><img src="trades/img/0002-stopped.webp" alt="MNQ 15m after exit, price through the stop"></div>
+    </div>
   </div>
 
   <div class="block">
