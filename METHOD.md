@@ -19,6 +19,7 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. |
 | 2026-07-30 | **Exit rule: "if I get pushed and volume, it stays. If not, it gets cut very quickly."** Needs a definition of *push and volume* and of *quickly*. |
 | 2026-07-30 | Stop sizing is worked **off the tick amount** on scalps — a fixed cost, not an invalidation level. Structural stops (swing low / entry candle) are the other mode. |
+| 2026-07-30 | **Directional filter: longs only** while the weekly is about to flip bullish and the monthly is bullish. No shorts into that. |
 
 ## Risk
 
@@ -46,8 +47,10 @@ One row per trade. No conclusions until there are enough rows.
 |---|---|---|---|---|---|---|---|---|
 | 0001 | MGC | 30m | 5m not driving into 1h close | panicky | no | **yes** | &minus;$19.80 | +$268.20 |
 | 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
+| 0003 | MGC | 30m | **not taken** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
 
 **Out early: 2 of 2.** Once it cost $288.00, once it saved $31.00.
 **Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
 **Risk per trade: $129, $141.50** — both ~11% of the remaining drawdown.
+**Passed setups: 1.** Saved $33.

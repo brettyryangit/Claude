@@ -25,5 +25,6 @@ trade did afterwards.
 |---|------|------------|-----------|-----|-----------|
 | [0001](trades/0001.md) | 2026-07-29 | MGC | Short ×3 | −$19.80 | by hand — target hit 15 min later |
 | [0002](trades/0002.md) | 2026-07-29 | MNQ | Long ×2 | −$112.50 | by hand — stop hit shortly after |
+| [0003](trades/0003.md) | 2026-07-30 | MGC | Short — **passed** | $0 | wrong side of weekly/monthly — stop would have hit |
 
 **Running: −$132.30** · 2 trades · 0 wins · $6.80 charges
