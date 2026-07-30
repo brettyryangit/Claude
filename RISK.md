@@ -74,9 +74,11 @@ against — not the $50,000.
 | 0001 | MGC | 42 ticks | 3 | $126 | over — would have been 2 lots ($84) |
 | 0002 | MNQ | 141.5 ticks | 2 | $141.50 | over — would have been 1 lot ($70.75) |
 | 0003 | MGC | 33 ticks | — | not taken | — |
+| 0005 | MGC | 69 ticks | 1 | $69 | inside — 69% of the day, $31 left |
 
-Both trades so far were bigger than the new limit allows. Day one closed at
-**−$132.30**, which is over a full day under the $100 rule.
+0001 and 0002 were both bigger than the new limit allows. 0005 was the first
+trade sized to fit inside it — $69 of $100, $31 left over. Running net:
+**−$134.90** across three closed trades.
 
 ### Win rate needed
 
