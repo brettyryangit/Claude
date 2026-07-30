@@ -38,10 +38,3 @@ One row per trade. No conclusions until there are enough rows.
 **Out early: 2 of 2.** Once it cost $288.00, once it saved $31.00.
 **Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
-
-## What the two rows say so far
-
-Nothing yet — two trades is noise, and they point in opposite directions. The
-one thing common to both: **the exit was a decision made in the moment, and on
-neither trade was there a written rule to make it against.** That is the field
-to fill in before the next entry, not after.
