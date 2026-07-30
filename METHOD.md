@@ -22,7 +22,7 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-30 | **Directional lean, not a hard rule.** Trading is off the 5m and 30m, so HTF bias does not have to be obeyed every trade. But with yesterday bullish, the weekly flipping and the monthly bullish, the lean is long and shorts get a harder look. |
 | 2026-07-30 | **Target shape: 2:1 minimum.** Doing it properly rather than clipping small wins. |
 | 2026-07-30 | **No typical stop.** Market structure picks the stop; I pick the risk; contracts are sized to make the two meet. |
-| 2026-07-30 | **Max loss for the day: $200.** Divisible across trades however the day goes. See [`RISK.md`](RISK.md). |
+| 2026-07-30 | **Max loss for the day: $100** (reduced from $200 the same day). Divisible across trades however the day goes. See [`RISK.md`](RISK.md). |
 
 ## Risk
 

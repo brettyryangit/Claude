@@ -16,7 +16,7 @@ unchanged.
 
 ## The model
 
-**Max loss for the day: $200.**
+**Max loss for the day: $100.** *(reduced from $200 on 2026-07-30)*
 
 Structure picks the stop. I pick the risk. Contracts are whatever makes the two
 meet:
@@ -29,25 +29,27 @@ The stop is never chosen to fit the size. The size is chosen to fit the stop.
 
 **Target shape:** 2:1 minimum. Break-even hit rate at 2:1 is **33%**.
 
-### The day's $200 can be spent as
+### The day's $100 can be spent as
 
-- one trade at $200
-- two trades at $100
-- four at $50 — however it gets divided, the day stops at $200
+- one trade at $100
+- two trades at $50
+- four at $25 — however it gets divided, the day stops at $100
 
 ## Sizing table
 
 MGC = **$1.00**/tick · MNQ = **$0.50**/tick
 
-| Stop | MGC @ $100 | MGC @ $200 | MNQ @ $100 | MNQ @ $200 |
+Contracts for the whole day's $100 in one trade, and for splitting it in two:
+
+| Stop | MGC @ $50 | **MGC @ $100** | MNQ @ $50 | **MNQ @ $100** |
 |---|---|---|---|---|
-| 25 ticks | 4 | 8 | 8 | 16 |
-| **50 ticks** | 2 | **4** | 4 | 8 |
-| 75 ticks | 1 | 2 | 2 | 5 |
-| **100 ticks** | **1** | **2** | 2 | 4 |
-| 150 ticks | — | 1 | 1 | 2 |
-| 200 ticks | — | 1 | 1 | 2 |
-| 400 ticks | — | — | — | 1 |
+| 25 ticks | 2 | **4** | 4 | **8** |
+| 50 ticks | 1 | **2** | 2 | **4** |
+| 75 ticks | — | **1** | 1 | **2** |
+| 100 ticks | — | **1** | 1 | **2** |
+| 150 ticks | — | — | — | **1** |
+| 200 ticks | — | — | — | **1** |
+| 400 ticks | — | — | — | — |
 
 Same dollar risk buys twice as many ticks on MNQ as on MGC. Tick counts don't
 transfer between instruments.
@@ -58,19 +60,25 @@ $200 a day against ~$1,200 of remaining drawdown:
 
 | Daily loss limit | Losing days to bust |
 |---|---|
-| **$200** | **6** |
+| $200 | 6 |
 | $150 | 8 |
-| $100 | 12 |
+| **$100** | **12** |
 
-Six red days at the full limit ends it. That is the constraint the daily figure
-is really running against — not the $50,000.
+Twelve red days at the full limit. That is the constraint the daily figure runs
+against — not the $50,000.
 
 ## What has actually been risked
 
-| # | Instrument | Stop | Lots | Risk | % of day's $200 |
+| # | Instrument | Stop | Lots | Risk | vs the new $100 day |
 |---|---|---|---|---|---|
-| 0001 | MGC | 42 ticks | 3 | $126 | 63% |
-| 0002 | MNQ | 141.5 ticks | 2 | $141.50 | 71% |
+| 0001 | MGC | 42 ticks | 3 | $126 | over — would have been 2 lots ($84) |
+| 0002 | MNQ | 141.5 ticks | 2 | $141.50 | over — would have been 1 lot ($70.75) |
 | 0003 | MGC | 33 ticks | — | not taken | — |
 
-Both inside the daily limit. Day one closed at **−$132.30**, 66% of the $200.
+Both trades so far were bigger than the new limit allows. Day one closed at
+**−$132.30**, which is over a full day under the $100 rule.
+
+### Win rate needed
+
+At 2:1, break-even is **33%**. The journal computes the actual figure as trades
+accumulate — see the expectancy table in [`METHOD.md`](METHOD.md).
