@@ -59,7 +59,7 @@ One row per trade. No conclusions until there are enough rows.
 | 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
 | 0003 | MGC | 30m | **passed** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
 | 0004 | Gold | 30m | **observed** — textbook Setup A, reference example | — | — | — | $0 | — |
-| 0005 | MGC | 15m | tagged at break-even, per the rule | noted risk was high | **yes — ruled beforehand** | no | &minus;$2.60 | *TBC* |
+| 0005 | MGC | 15m | tagged at break-even, per the rule | noted risk was high | **yes — ruled beforehand** | no | &minus;$2.60 | +$172.40 |
 
 ### Expectancy data
 
@@ -75,7 +75,7 @@ instrument.
 | 0001 | MGC | *TBC* | 3 | $126 | &minus;$15 gross | **&minus;0.12R** | 42 | &minus;5 |
 | 0002 | MNQ | US | 2 | $141.50 | &minus;$110.50 gross | **&minus;0.78R** | 141.5 | &minus;110.5 |
 | 0003 | MGC | *TBC* | — | $33 | not taken | — | 33 | — |
-| 0005 | MGC | overnight/Asian | 1 | $69 | $0.00 gross | **0R** | 69 | 0 |
+| 0005 | MGC | overnight/Asian | 1 | $69 | $0.00 gross | **0R** | 69 | 175 (would have been) |
 
 In R: cut at 0.12R on one, 0.78R on the other. Still inconsistent, but the gap
 is much smaller than the tick counts made it look.
@@ -87,7 +87,7 @@ the review section below.
 
 **Out early (closed by hand): 2 of 2.** Once it cost $288.00, once it saved $31.00.
 **Net so far: &minus;$134.90** over 3 trades, 0 wins, $9.40 in charges.
-**Stop moved to break-even: 1 of 3** — 0005, on a condition written before entry, not a fear reaction. Watch for this happening *without* a rule on paper first.
+**Stop moved to break-even: 1 of 3** — 0005, on a condition written before entry, not a fear reaction. It still gave back the full $175 target: a written rule is not automatically a good rule. Watch for this happening *without* a rule on paper first, and watch this specific rule ("BE on a new lower low") for whether it keeps doing this.
 **Plan taken to its own conclusion: 0 of 3.**
 **Risk per trade: $129, $141.50, $69** — the first two ~11% of the remaining drawdown, 0005 at 5.75%.
 **Passed setups: 1** (deliberate). Saved $33.

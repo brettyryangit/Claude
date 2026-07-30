@@ -28,6 +28,6 @@ trade did afterwards.
 | [0002](trades/0002.md) | 2026-07-29 | MNQ | Long ×2 | −$112.50 | by hand — stop hit shortly after |
 | [0003](trades/0003.md) | 2026-07-30 | MGC | Short — **passed** | $0 | wrong side of weekly/monthly — stop would have hit |
 | [0004](trades/0004.md) | 2026-07-30 | Gold | Long — **observed** | $0 | textbook Setup A, reference example |
-| [0005](trades/0005.md) | 2026-07-30 | MGC | Short ×1 | −$2.60 | break-even stop, ruled to BE beforehand |
+| [0005](trades/0005.md) | 2026-07-30 | MGC | Short ×1 | −$2.60 | break-even stop — target hit after, $175 left on the table |
 
 **Running: −$134.90** · 3 trades · 0 wins · $9.40 charges
