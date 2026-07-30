@@ -20,7 +20,9 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-30 | **Exit rule: "if I get pushed and volume, it stays. If not, it gets cut very quickly."** Needs a definition of *push and volume* and of *quickly*. |
 | 2026-07-30 | Stop sizing is worked **off the tick amount** on scalps — a fixed cost, not an invalidation level. Structural stops (swing low / entry candle) are the other mode. |
 | 2026-07-30 | **Directional lean, not a hard rule.** Trading is off the 5m and 30m, so HTF bias does not have to be obeyed every trade. But with yesterday bullish, the weekly flipping and the monthly bullish, the lean is long and shorts get a harder look. |
-| 2026-07-30 | **Stated edge: fading the market — higher contract counts, small wins.** That is where the most profitable trades have historically come from. Not yet evidenced in this journal. |
+| 2026-07-30 | **Historically** most profitable when fading the market with higher contract counts and small wins — but **deliberately moving away from that.** |
+| 2026-07-30 | **Target shape: 2:1 minimum.** Risk ~$50, aiming for ~$100. Doing it properly rather than clipping small wins. |
+| 2026-07-30 | Stop width is **session-dependent.** London gold is a different animal from the US session — same instrument, different stop. |
 
 ## Risk
 
@@ -39,6 +41,8 @@ trailing** drawdown, ~$1,200 remaining.
    contract so the structural stop fits the buffer. See [`RISK.md`](RISK.md).
 5. If entries are HTF, what timeframe governs the exit? 0001 was entered on the
    HTF and exited on the 5-minute into a 1-hour close.
+6. What is the typical stop width per **session**? London gold vs US gold vs
+   overnight — needs a number each so the $50 risk buys the right size.
 
 ## Tracker
 
@@ -55,18 +59,22 @@ One row per trade. No conclusions until there are enough rows.
 The numbers that will eventually test the stated edge. Ticks, not dollars, so
 size and outcome stay separable.
 
-| # | Instr | Lots | Ticks risked | Ticks made/lost | Net | Win? |
-|---|---|---|---|---|---|---|
-| 0001 | MGC | 3 | 42 | **&minus;5** | &minus;$19.80 | no |
-| 0002 | MNQ | 2 | 141.5 | **&minus;110.5** | &minus;$112.50 | no |
-| 0003 | MGC | — | 33 | not taken | $0 | — |
+**R is the comparable, not ticks.** MGC is $1.00/tick, MNQ is $0.50 — so 110
+gold ticks is $110 and 110 Nasdaq ticks is $55. Ticks only compare within one
+instrument.
 
-Cut at 5 ticks on one and 110.5 on the other. Same behaviour, no consistent
-threshold yet.
+| # | Instr | Session | Lots | Risk | Result | **R** | Ticks risked | Ticks out |
+|---|---|---|---|---|---|---|---|---|
+| 0001 | MGC | *TBC* | 3 | $126 | &minus;$15 gross | **&minus;0.12R** | 42 | &minus;5 |
+| 0002 | MNQ | US | 2 | $141.50 | &minus;$110.50 gross | **&minus;0.78R** | 141.5 | &minus;110.5 |
+| 0003 | MGC | *TBC* | — | $33 | not taken | — | 33 | — |
 
-**What would evidence the fade-with-size edge:** hit rate, average win in ticks,
-average loss in ticks, over 20–30 trades. Then expectancy per lot is computable
-and the size question answers itself instead of being argued.
+In R: cut at 0.12R on one, 0.78R on the other. Still inconsistent, but the gap
+is much smaller than the tick counts made it look.
+
+**What would evidence the 2:1 approach:** hit rate and average R per trade over
+20–30 trades. At 2:1 the break-even hit rate is 33%, so anything above that is
+an edge — and that is a number, not an argument.
 
 ### Behaviour counts
 

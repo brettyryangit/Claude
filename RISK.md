@@ -52,6 +52,19 @@ not against the buffer.
 | MGC — Micro Gold | $10.00 | 0.10 | **$1.00** |
 | MNQ — Micro Nasdaq | $2.00 | 0.25 | **$0.50** |
 
+## Target shape
+
+Risk **~$50**, aiming for **2:1 minimum** — so ~$100 out. Break-even hit rate at
+2:1 is **33%**.
+
+| Risk | Target at 2:1 | MGC stop | MGC target | MNQ stop | MNQ target |
+|---|---|---|---|---|---|
+| **$50** | $100 | 50 ticks (5.0 pts) | 100 ticks (10.0 pts) | 100 ticks (25 pts) | 200 ticks (50 pts) |
+| $75 | $150 | 75 ticks (7.5 pts) | 150 ticks (15 pts) | 150 ticks (37.5 pts) | 300 ticks (75 pts) |
+
+Same dollar risk buys **twice as many ticks** on MNQ as on MGC. Tick counts are
+not transferable between the two.
+
 ## Widest stop affordable at 1 contract
 
 Minimum size is 1 contract, so the stop distance is what has to give — not the
