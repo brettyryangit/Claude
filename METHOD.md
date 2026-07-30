@@ -14,7 +14,8 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-29 | "I chase a little liquidity in gold. I know it goes up one way and goes down. Chase liquidity." |
 | 2026-07-29 | Entries are taken off the high timeframe. |
 | 2026-07-29 | Setups so far: liquidity grab (0001), morning star reversal (0002). |
-| 2026-07-30 | **Setup A — the one being looked for:** uptrend, retracement, bullish hammer / pin bar, then a morning star reversal. Defined with a reference chart in [`SETUPS.md`](SETUPS.md). |
+| 2026-07-30 | **Setup A — the one being looked for:** uptrend, retracement to the 0.618 fib, bullish hammer / pin bar off it, then a morning star reversal. Defined with reference charts in [`SETUPS.md`](SETUPS.md). |
+| 2026-07-30 | **Gold respects the 0.618 fib.** That is where the retracement is expected to turn. |
 | 2026-07-30 | Stops go **under the swing low or under the entry candle**. |
 | 2026-07-30 | Smallest size is 1 contract, so stop distance is the only lever — MGC $1/tick, MNQ $0.50/tick. Not willing to run a 200-tick stop to risk $200 on gold. |
 | 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. |
@@ -44,6 +45,9 @@ trailing** drawdown, ~$1,200 remaining.
    HTF and exited on the 5-minute into a 1-hour close.
 6. Does session change the *typical* stop the market hands out — London gold vs
    US gold vs overnight? Not a rule to set, just something the data may show.
+7. **Which leg does the fib get anchored to?** On 30 Jul the smaller leg put the
+   0.618 at 4,064 and the larger at 4,042 — 22 points apart, the difference
+   between an 80-tick stop and a 300-tick one.
 
 ## Tracker
 
@@ -53,7 +57,8 @@ One row per trade. No conclusions until there are enough rows.
 |---|---|---|---|---|---|---|---|---|
 | 0001 | MGC | 30m | 5m not driving into 1h close | panicky | no | **yes** | &minus;$19.80 | +$268.20 |
 | 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
-| 0003 | MGC | 30m | **not taken** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
+| 0003 | MGC | 30m | **passed** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
+| 0004 | Gold | 30m | **missed** — textbook Setup A, entry gone by the time it was called | — | — | — | $0 | *TBC* |
 
 ### Expectancy data
 
@@ -82,7 +87,8 @@ the review section below.
 **Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
 **Risk per trade: $129, $141.50** — both ~11% of the remaining drawdown.
-**Passed setups: 1.** Saved $33.
+**Passed setups: 1** (deliberate). Saved $33.
+**Missed setups: 1** (Setup A, entry already gone).
 
 ## Review at 20–50 trades
 
@@ -97,5 +103,6 @@ these with data rather than with two samples:
 - Instrument: gold vs Nasdaq.
 - Does the exit rule make or lose money once it has a definition?
 - Do the passed trades save more than they cost?
+- How many Setup A's are being missed, and why — late to the chart, or hesitation?
 
 Then tailor to whatever the numbers actually show.
