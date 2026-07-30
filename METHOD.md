@@ -16,7 +16,9 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-29 | Setups so far: liquidity grab (0001), morning star reversal (0002). |
 | 2026-07-30 | Stops go **under the swing low or under the entry candle**. |
 | 2026-07-30 | Smallest size is 1 contract, so stop distance is the only lever — MGC $1/tick, MNQ $0.50/tick. Not willing to run a 200-tick stop to risk $200 on gold. |
-| 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. *(unfinished — needs the rest of the sentence)* |
+| 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. |
+| 2026-07-30 | **Exit rule: "if I get pushed and volume, it stays. If not, it gets cut very quickly."** Needs a definition of *push and volume* and of *quickly*. |
+| 2026-07-30 | Stop sizing is worked **off the tick amount** on scalps — a fixed cost, not an invalidation level. Structural stops (swing low / entry candle) are the other mode. |
 
 ## Risk
 
