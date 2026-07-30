@@ -58,7 +58,7 @@ One row per trade. No conclusions until there are enough rows.
 | 0001 | MGC | 30m | 5m not driving into 1h close | panicky | no | **yes** | &minus;$19.80 | +$268.20 |
 | 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
 | 0003 | MGC | 30m | **passed** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
-| 0004 | Gold | 30m | **missed** — textbook Setup A, entry gone by the time it was called | — | — | — | $0 | *TBC* |
+| 0004 | Gold | 30m | **observed** — textbook Setup A, reference example | — | — | — | $0 | — |
 
 ### Expectancy data
 
@@ -88,7 +88,7 @@ the review section below.
 **Stop moved to break-even: 0 of 2.** **Plan taken to its own conclusion: 0 of 2.**
 **Risk per trade: $129, $141.50** — both ~11% of the remaining drawdown.
 **Passed setups: 1** (deliberate). Saved $33.
-**Missed setups: 1** (Setup A, entry already gone).
+**Observed Setup A occurrences: 1.** Counted for frequency, not as a loss.
 
 ## Review at 20–50 trades
 
@@ -103,6 +103,6 @@ these with data rather than with two samples:
 - Instrument: gold vs Nasdaq.
 - Does the exit rule make or lose money once it has a definition?
 - Do the passed trades save more than they cost?
-- How many Setup A's are being missed, and why — late to the chart, or hesitation?
+- How often does Setup A actually occur? Frequency tells you how much the edge can be used, separately from how it performs.
 
 Then tailor to whatever the numbers actually show.
