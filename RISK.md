@@ -56,7 +56,7 @@ transfer between instruments.
 
 ## The one number to know
 
-$200 a day against ~$1,200 of remaining drawdown:
+$100 a day against ~$1,200 of remaining drawdown:
 
 | Daily loss limit | Losing days to bust |
 |---|---|
