@@ -6,7 +6,9 @@
 |---|---|---|
 | | | |
 
-**Risk:** $___ · ___% of remaining drawdown · R:R ___ : 1
+**Risk:** $___ · ___ ticks · ___% of remaining drawdown · R:R ___ : 1
+
+**HTF lean:** *(long / short / none — weekly and monthly)*
 
 **Why I entered:**
 
@@ -26,7 +28,7 @@
 |---|---|---|---|---|---|
 | | | | | | stop / target / rule / discretionary |
 
-**MAE while I held it:** ___ pts *(furthest offside)*
+**Result in ticks:** ___ · **MAE while I held it:** ___ ticks *(furthest offside)*
 
 **What happened:**
 

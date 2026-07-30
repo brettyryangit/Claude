@@ -19,7 +19,8 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. |
 | 2026-07-30 | **Exit rule: "if I get pushed and volume, it stays. If not, it gets cut very quickly."** Needs a definition of *push and volume* and of *quickly*. |
 | 2026-07-30 | Stop sizing is worked **off the tick amount** on scalps — a fixed cost, not an invalidation level. Structural stops (swing low / entry candle) are the other mode. |
-| 2026-07-30 | **Directional filter: longs only** while the weekly is about to flip bullish and the monthly is bullish. No shorts into that. |
+| 2026-07-30 | **Directional lean, not a hard rule.** Trading is off the 5m and 30m, so HTF bias does not have to be obeyed every trade. But with yesterday bullish, the weekly flipping and the monthly bullish, the lean is long and shorts get a harder look. |
+| 2026-07-30 | **Stated edge: fading the market — higher contract counts, small wins.** That is where the most profitable trades have historically come from. Not yet evidenced in this journal. |
 
 ## Risk
 
@@ -48,6 +49,26 @@ One row per trade. No conclusions until there are enough rows.
 | 0001 | MGC | 30m | 5m not driving into 1h close | panicky | no | **yes** | &minus;$19.80 | +$268.20 |
 | 0002 | MNQ | 30m | closed by hand 7.75 pts above stop | thought stop was safe | no | **yes** | &minus;$112.50 | &minus;$143.50 |
 | 0003 | MGC | 30m | **not taken** — wrong side of weekly/monthly | — | — | — | $0 | &minus;$33 |
+
+### Expectancy data
+
+The numbers that will eventually test the stated edge. Ticks, not dollars, so
+size and outcome stay separable.
+
+| # | Instr | Lots | Ticks risked | Ticks made/lost | Net | Win? |
+|---|---|---|---|---|---|---|
+| 0001 | MGC | 3 | 42 | **&minus;5** | &minus;$19.80 | no |
+| 0002 | MNQ | 2 | 141.5 | **&minus;110.5** | &minus;$112.50 | no |
+| 0003 | MGC | — | 33 | not taken | $0 | — |
+
+Cut at 5 ticks on one and 110.5 on the other. Same behaviour, no consistent
+threshold yet.
+
+**What would evidence the fade-with-size edge:** hit rate, average win in ticks,
+average loss in ticks, over 20–30 trades. Then expectancy per lot is computable
+and the size question answers itself instead of being argued.
+
+### Behaviour counts
 
 **Out early: 2 of 2.** Once it cost $288.00, once it saved $31.00.
 **Net so far: &minus;$132.30** over 2 trades, 0 wins, $6.80 in charges.
