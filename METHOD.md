@@ -14,6 +14,7 @@ goes down. Sweep one side, reverse. The trade is taken after the sweep.
 | 2026-07-29 | "I chase a little liquidity in gold. I know it goes up one way and goes down. Chase liquidity." |
 | 2026-07-29 | Entries are taken off the high timeframe. |
 | 2026-07-29 | Setups so far: liquidity grab (0001), morning star reversal (0002). |
+| 2026-07-30 | **Setup A — the one being looked for:** uptrend, retracement, bullish hammer / pin bar, then a morning star reversal. Defined with a reference chart in [`SETUPS.md`](SETUPS.md). |
 | 2026-07-30 | Stops go **under the swing low or under the entry candle**. |
 | 2026-07-30 | Smallest size is 1 contract, so stop distance is the only lever — MGC $1/tick, MNQ $0.50/tick. Not willing to run a 200-tick stop to risk $200 on gold. |
 | 2026-07-30 | Exit is normally off liquidity — a swing on liquidity. |
@@ -90,7 +91,7 @@ these with data rather than with two samples:
 
 - Hit rate, and average R per trade.
 - Is 2:1 actually being achieved, or are targets getting cut short?
-- Which setups win — liquidity grab, morning star, fade, continuation?
+- Which setups win — Setup A, liquidity grab, fade, continuation?
 - Long vs short: is one side carrying the results?
 - Session: does London / US / overnight change the outcome?
 - Instrument: gold vs Nasdaq.

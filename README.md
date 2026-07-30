@@ -1,7 +1,8 @@
 # Trading Journal
 
 A record of every trade. [`METHOD.md`](METHOD.md) holds the strategy as it gets
-written down. [`RISK.md`](RISK.md) holds the account and sizing.
+written down. [`SETUPS.md`](SETUPS.md) holds the named patterns with reference
+charts. [`RISK.md`](RISK.md) holds the account and sizing.
 [`CHECKLIST.md`](CHECKLIST.md) holds the six questions.
 
 **$50,000 account · $2,000 trailing drawdown · ~$1,200 remaining · $100 max loss per day · 2:1 minimum**
