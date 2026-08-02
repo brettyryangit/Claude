@@ -53,8 +53,10 @@
   .trade .top .meta { font-size: 10.5pt; color: var(--ink-2); }
 
   .shots .cap { font-size: 8pt; color: var(--ink-3); letter-spacing: 1px; margin-bottom: 1.5mm; }
-  .shots .frame { width: 100%; height: 52mm; overflow: hidden; border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3.5mm; }
+  .shots .frame { width: 100%; height: 42mm; overflow: hidden; border: 1px solid var(--border); border-radius: 3px; margin-bottom: 3.5mm; background: #000; }
+  .shots .frame.tall { height: 56mm; }
   .shots img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+  .shots .frame.tall img { object-fit: contain; }
 
   .block { margin-bottom: 4mm; }
   .block .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; margin-bottom: 1.5mm; }
@@ -73,15 +75,15 @@
 
   /* ---- left on the table ---- */
   .review h1 { font-size: 22pt; font-weight: 700; letter-spacing: 1px; margin: 4mm 0 3mm; }
-  .review .dek { font-size: 11pt; color: var(--ink-2); margin-bottom: 10mm; max-width: 150mm; }
-  .headline { display: flex; align-items: baseline; gap: 6mm; padding: 6mm 0; margin-bottom: 10mm;
+  .review .dek { font-size: 11pt; color: var(--ink-2); margin-bottom: 7mm; max-width: 150mm; }
+  .headline { display: flex; align-items: baseline; gap: 6mm; padding: 4.5mm 0; margin-bottom: 7mm;
               border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
   .headline .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1.5px; max-width: 40mm; }
   .headline .big { font-size: 30pt; font-weight: 700; letter-spacing: -0.5px; }
 
-  .rt-card { border: 1px solid var(--border); border-radius: 4px; padding: 6mm; margin-bottom: 6mm; }
-  .rt-card .name { font-size: 13pt; font-weight: 700; margin-bottom: 4mm; }
-  .rt-row { display: flex; gap: 10mm; margin-bottom: 2mm; }
+  .rt-card { border: 1px solid var(--border); border-radius: 4px; padding: 4.5mm 6mm; margin-bottom: 4mm; }
+  .rt-card .name { font-size: 12.5pt; font-weight: 700; margin-bottom: 2.5mm; }
+  .rt-row { display: flex; gap: 10mm; margin-bottom: 1mm; }
   .rt-row .k { font-size: 9pt; color: var(--ink-3); letter-spacing: 1px; width: 34mm; padding-top: 1mm; }
   .rt-row .v { font-size: 13pt; font-weight: 700; }
   .rt-row .note { font-size: 10pt; color: var(--ink-2); font-weight: 400; margin-left: 3mm; }
@@ -125,13 +127,18 @@
   </div>
   <div class="toc-row">
     <div class="n">03</div>
-    <div class="t">Left on the Table<div class="sub">Trades that would have been better held</div></div>
+    <div class="t">Trade 0005<div class="sub">MGC Micro Gold — Short</div></div>
     <div class="p">5</div>
   </div>
   <div class="toc-row">
     <div class="n">04</div>
-    <div class="t">Running Tally<div class="sub">Where the account stands</div></div>
+    <div class="t">Left on the Table<div class="sub">Trades that would have been better held</div></div>
     <div class="p">6</div>
+  </div>
+  <div class="toc-row">
+    <div class="n">05</div>
+    <div class="t">Running Tally<div class="sub">Where the account stands</div></div>
+    <div class="p">7</div>
   </div>
 </div>
 
@@ -225,15 +232,62 @@
   <div class="foot"><span>TRADING JOURNAL</span><span>4</span></div>
 </div>
 
-<!-- PAGE 5 — LEFT ON THE TABLE -->
+<!-- PAGE 5 — TRADE 0005 -->
+<div class="page trade">
+  <div class="top">
+    <div class="label">TRADE 0005</div>
+    <h1>MGC Micro Gold — Short</h1>
+    <div class="meta">30 July 2026 · 17:48 &ndash; 04:07</div>
+  </div>
+
+  <div class="shots">
+    <div class="cap">BEFORE — AT ENTRY, 17:48</div>
+    <div class="frame"><img src="trades/img/0005-in.webp" alt="MGC 30m at entry"></div>
+    <div class="cap">AFTER — TARGET HIT, PRICE RUNNING PAST IT</div>
+    <div class="frame tall"><img src="trades/img/0005-after-target.jpeg" alt="MGC 15m after close, target hit and price through it"></div>
+  </div>
+
+  <div class="block">
+    <div class="k">WHY I TOOK IT</div>
+    <div class="v">Aggressive entry off a 15m flip, taken in the last five minutes of
+    that candle. Break/retest of the ascending trendline off the ~4,108 base — rally
+    topped with a wick to ~4,167 that fell short of resistance, sharp red rejection,
+    chop back up, then rolled back down through the trendline.</div>
+  </div>
+
+  <div class="block">
+    <div class="k">WHY I EXITED</div>
+    <div class="v">Stop moved to break-even on a rule set before entry: if the next
+    candle printed a new lower low, confirming continuation, move to break-even.
+    It did. Price then came back and tagged the break-even stop.</div>
+  </div>
+
+  <div class="pnl">
+    <div class="k">P&amp;L</div>
+    <div class="big" style="color:var(--red)">&minus;$2.60</div>
+  </div>
+
+  <div class="notes">
+    <div class="k">NOTES</div>
+    <ul>
+      <li>Fees only — classed as break-even, not a loss. Original stop (4,127.90) never
+      touched.</li>
+      <li>Target hit after the close, price ran to 4,100.30 — $175.00 left on the table.</li>
+    </ul>
+  </div>
+
+  <div class="foot"><span>TRADING JOURNAL</span><span>5</span></div>
+</div>
+
+<!-- PAGE 6 — LEFT ON THE TABLE -->
 <div class="page review">
   <h1>LEFT ON THE TABLE</h1>
-  <div class="dek">Not missed trades — trades that were taken and closed by hand.
+  <div class="dek">Not missed trades — trades that were taken and closed early.
   What each one actually made, against what holding to plan would have made.</div>
 
   <div class="headline">
-    <div class="k">HOLDING TO PLAN, ACROSS BOTH TRADES, WOULD HAVE NET</div>
-    <div class="big" style="color:var(--green)">+$257.00 more</div>
+    <div class="k">HOLDING TO PLAN, ACROSS ALL CLOSED TRADES, WOULD HAVE NET</div>
+    <div class="big" style="color:var(--green)">+$432.00 more</div>
   </div>
 
   <div class="rt-card">
@@ -250,33 +304,42 @@
     <div class="rt-row"><div class="k">DIFFERENCE</div><div class="v">&minus;$31.00<span class="note">closing early was better</span></div></div>
   </div>
 
-  <div class="block" style="margin-top:8mm">
-    <div class="k">SO FAR</div>
-    <div class="v">Out early on both trades. Once it cost $288.00. Once it saved $31.00.</div>
+  <div class="rt-card">
+    <div class="name">Trade 0005 — MGC Short</div>
+    <div class="rt-row"><div class="k">CLOSED</div><div class="v" style="color:var(--red)">&minus;$2.60</div></div>
+    <div class="rt-row"><div class="k">HELD TO PLAN</div><div class="v" style="color:var(--green)">+$172.40</div></div>
+    <div class="rt-row"><div class="k">DIFFERENCE</div><div class="v">+$175.00<span class="note">holding would have been better</span></div></div>
   </div>
 
-  <div class="foot"><span>TRADING JOURNAL</span><span>5</span></div>
+  <div class="block" style="margin-top:5mm">
+    <div class="k">SO FAR</div>
+    <div class="v">Out early on three trades. Twice it cost money ($288.00, $175.00).
+    Once it saved money ($31.00). 0005 followed a rule written before entry — proof a
+    written rule isn't automatically the right one.</div>
+  </div>
+
+  <div class="foot"><span>TRADING JOURNAL</span><span>6</span></div>
 </div>
 
-<!-- PAGE 6 — RUNNING TALLY -->
+<!-- PAGE 7 — RUNNING TALLY -->
 <div class="page tally">
   <h1>RUNNING TALLY</h1>
 
   <div class="tgrid">
     <div class="tstat">
       <div class="k">NET P&amp;L</div>
-      <div class="v" style="color:var(--red)">&minus;$132.30</div>
-      <div class="n">2 trades taken</div>
+      <div class="v" style="color:var(--red)">&minus;$134.90</div>
+      <div class="n">3 trades taken</div>
     </div>
     <div class="tstat">
-      <div class="k">WIN RATE</div>
-      <div class="v">0%</div>
-      <div class="n">0 wins · 2 losses</div>
+      <div class="k">RECORD</div>
+      <div class="v">0&ndash;2&ndash;1</div>
+      <div class="n">wins &ndash; losses &ndash; break-even</div>
     </div>
     <div class="tstat">
       <div class="k">CHARGES PAID</div>
-      <div class="v">$6.80</div>
-      <div class="n">across both trades</div>
+      <div class="v">$9.40</div>
+      <div class="n">across three trades</div>
     </div>
     <div class="tstat">
       <div class="k">PASSED / OBSERVED</div>
@@ -286,12 +349,13 @@
   </div>
 
   <div class="footnote">
-    &minus;$132.30 against a $100 max loss per day and ~$1,200 remaining on the
-    $2,000 trailing drawdown. No conclusions drawn — this page updates as
+    &minus;$134.90 against a $100 max loss per day and ~$1,200 remaining on the
+    $2,000 trailing drawdown. $432.00 left on the table across the three closed
+    trades — see previous page. No conclusions drawn — this page updates as
     trades accumulate, reviewed properly at 20&ndash;50.
   </div>
 
-  <div class="foot"><span>TRADING JOURNAL</span><span>6</span></div>
+  <div class="foot"><span>TRADING JOURNAL</span><span>7</span></div>
 </div>
 
 </body>
