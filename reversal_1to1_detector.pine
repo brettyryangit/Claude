@@ -25,7 +25,7 @@ sweepRiskStep     = input.int(20, title = "Optimizer: Max Risk step (ticks)", mi
 minTradesInput    = input.int(5, title = "Optimizer: min trades to qualify", minval = 1, group = "Parameter Optimizer")
 optimizerMetric   = input.string("Profit Factor", title = "Optimizer: rank by", options = ["Profit Factor", "Min Losing Streak"], group = "Parameter Optimizer")
 riskPerTradeInput = input.float(200, title = "Optimizer: $ risked per trade", minval = 0.01, group = "Parameter Optimizer")
-maxDrawdownInput  = input.float(2000, title = "Optimizer: max affordable losing-streak drawdown ($)", minval = 0.01, group = "Parameter Optimizer")
+maxStreakInput    = input.int(10, title = "Optimizer: max acceptable losing streak (trades)", minval = 1, group = "Parameter Optimizer")
 
 tickSize = syminfo.mintick
 
@@ -306,10 +306,10 @@ if showStatsTable and barstate.islast
 if enableOptimizer and barstate.islast and comboCount > 0
     var table optTable = table.new(position.bottom_right, 2, 8, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
 
-    // Affordability comes first: a combo whose worst losing streak would cost more
-    // than the account can take is disqualified outright, never just ranked lower.
+    // Affordability comes first: a combo whose worst losing streak exceeds the
+    // acceptable trade count is disqualified outright, never just ranked lower.
     // Only combos that survive that cap are then ranked by the chosen metric.
-    maxAllowedStreak = int(math.floor(maxDrawdownInput / riskPerTradeInput))
+    maxAllowedStreak = maxStreakInput
 
     // "Profit Factor" ranks by highest gross-win/gross-loss ratio; "Min Losing
     // Streak" instead ranks by the fewest consecutive losses a combo suffered —
