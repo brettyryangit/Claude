@@ -12,6 +12,9 @@ showLossLabels    = input.bool(true, title = "Show losing trade labels")
 showSkippedLabels = input.bool(true, title = "Show skipped-signal labels")
 showStatsTable    = input.bool(true, title = "Show stats table")
 
+useLookbackStart  = input.bool(false, title = "Limit calculation start date")
+lookbackStart     = input.time(timestamp("2024-01-01 00:00"), title = "Calculate from")
+
 enableOptimizer   = input.bool(true, title = "Optimizer: enabled", group = "Parameter Optimizer")
 sweepRrMin        = input.float(0.5, title = "Optimizer: R:R min", minval = 0.1, step = 0.1, group = "Parameter Optimizer")
 sweepRrMax        = input.float(3.0, title = "Optimizer: R:R max", minval = 0.1, step = 0.1, group = "Parameter Optimizer")
@@ -133,8 +136,10 @@ isBearishPrev = close[1] < open[1]
 isBullishNow  = close > open
 isBearishNow  = close < open
 
-shortFlip = takeShorts and barstate.isconfirmed and isBullishPrev and isBearishNow
-longFlip  = takeLongs  and barstate.isconfirmed and isBearishPrev and isBullishNow
+withinLookback = not useLookbackStart or time >= lookbackStart
+
+shortFlip = takeShorts and barstate.isconfirmed and withinLookback and isBullishPrev and isBearishNow
+longFlip  = takeLongs  and barstate.isconfirmed and withinLookback and isBearishPrev and isBullishNow
 
 bool shortTaken = false
 bool longTaken  = false
@@ -282,8 +287,9 @@ if showStatsTable and barstate.islast
     table.cell(statsTable, 1, 4, na(profitFactor) ? "n/a" : str.tostring(profitFactor, "#.##"), text_color = na(profitFactor) ? color.gray : (profitFactor >= 1 ? color.green : color.red))
     table.cell(statsTable, 0, 5, "Max losing streak", text_color = color.white)
     table.cell(statsTable, 1, 5, str.tostring(maxLossStreak), text_color = color.red)
+    sinceTime = useLookbackStart ? math.max(startTime, lookbackStart) : startTime
     table.cell(statsTable, 0, 6, "Since",         text_color = color.white)
-    table.cell(statsTable, 1, 6, str.format_time(startTime, "yyyy-MM-dd"), text_color = color.white)
+    table.cell(statsTable, 1, 6, str.format_time(sinceTime, "yyyy-MM-dd"), text_color = color.white)
 
 // ---- Optimizer results table ---------------------------------------------------
 if enableOptimizer and barstate.islast and comboCount > 0
