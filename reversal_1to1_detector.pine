@@ -24,6 +24,8 @@ sweepRiskMax      = input.int(200, title = "Optimizer: Max Risk max (ticks)", mi
 sweepRiskStep     = input.int(20, title = "Optimizer: Max Risk step (ticks)", minval = 1, group = "Parameter Optimizer")
 minTradesInput    = input.int(5, title = "Optimizer: min trades to qualify", minval = 1, group = "Parameter Optimizer")
 optimizerMetric   = input.string("Profit Factor", title = "Optimizer: rank by", options = ["Profit Factor", "Min Losing Streak"], group = "Parameter Optimizer")
+riskPerTradeInput = input.float(200, title = "Optimizer: $ risked per trade", minval = 0.01, group = "Parameter Optimizer")
+maxDrawdownInput  = input.float(2000, title = "Optimizer: max affordable losing-streak drawdown ($)", minval = 0.01, group = "Parameter Optimizer")
 
 tickSize = syminfo.mintick
 
@@ -302,7 +304,12 @@ if showStatsTable and barstate.islast
 
 // ---- Optimizer results table ---------------------------------------------------
 if enableOptimizer and barstate.islast and comboCount > 0
-    var table optTable = table.new(position.bottom_right, 2, 7, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+    var table optTable = table.new(position.bottom_right, 2, 8, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+
+    // Affordability comes first: a combo whose worst losing streak would cost more
+    // than the account can take is disqualified outright, never just ranked lower.
+    // Only combos that survive that cap are then ranked by the chosen metric.
+    maxAllowedStreak = int(math.floor(maxDrawdownInput / riskPerTradeInput))
 
     // "Profit Factor" ranks by highest gross-win/gross-loss ratio; "Min Losing
     // Streak" instead ranks by the fewest consecutive losses a combo suffered —
@@ -311,18 +318,18 @@ if enableOptimizer and barstate.islast and comboCount > 0
     bestScore = -1.0e9
     for i = 0 to comboCount - 1
         trades = array.get(comboWins, i) + array.get(comboLosses, i)
-        if trades >= minTradesInput
-            gp     = array.get(comboGrossProfit, i)
-            gl     = array.get(comboGrossLoss, i)
-            pf     = gl > 0 ? gp / gl : (gp > 0 ? 999.0 : 0.0)
-            streak = array.get(comboMaxStreak, i)
-            score  = optimizerMetric == "Profit Factor" ? pf : -streak
+        streak = array.get(comboMaxStreak, i)
+        if trades >= minTradesInput and streak <= maxAllowedStreak
+            gp    = array.get(comboGrossProfit, i)
+            gl    = array.get(comboGrossLoss, i)
+            pf    = gl > 0 ? gp / gl : (gp > 0 ? 999.0 : 0.0)
+            score = optimizerMetric == "Profit Factor" ? pf : -streak
             if score > bestScore
                 bestScore := score
                 bestIndex := i
 
     table.cell(optTable, 0, 0, "Best Setup", text_color = color.yellow)
-    table.cell(optTable, 1, 0, optimizerMetric == "Profit Factor" ? "(by profit factor)" : "(by min losing streak)", text_color = color.yellow)
+    table.cell(optTable, 1, 0, (optimizerMetric == "Profit Factor" ? "(profit factor, " : "(min streak, ") + "streak≤" + str.tostring(maxAllowedStreak) + ")", text_color = color.yellow)
 
     if bestIndex >= 0
         bw   = array.get(comboWins, bestIndex)
@@ -343,12 +350,14 @@ if enableOptimizer and barstate.islast and comboCount > 0
         table.cell(optTable, 1, 3, str.tostring(bpf, "#.##"), text_color = color.green)
         table.cell(optTable, 0, 4, "Max losing streak", text_color = color.white)
         table.cell(optTable, 1, 4, str.tostring(bstk), text_color = color.red)
-        table.cell(optTable, 0, 5, "Win rate",     text_color = color.white)
-        table.cell(optTable, 1, 5, str.tostring(bwr, "#.#") + "%", text_color = color.white)
-        table.cell(optTable, 0, 6, "Trades",       text_color = color.white)
-        table.cell(optTable, 1, 6, str.tostring(bt), text_color = color.white)
+        table.cell(optTable, 0, 5, "Worst streak $",text_color = color.white)
+        table.cell(optTable, 1, 5, "$" + str.tostring(bstk * riskPerTradeInput, "#.##"), text_color = color.red)
+        table.cell(optTable, 0, 6, "Win rate",     text_color = color.white)
+        table.cell(optTable, 1, 6, str.tostring(bwr, "#.#") + "%", text_color = color.white)
+        table.cell(optTable, 0, 7, "Trades",       text_color = color.white)
+        table.cell(optTable, 1, 7, str.tostring(bt), text_color = color.white)
     else
-        table.cell(optTable, 0, 1, "not enough qualifying trades yet", text_color = color.gray)
+        table.cell(optTable, 0, 1, "no combo fits: streak≤" + str.tostring(maxAllowedStreak) + ", trades≥" + str.tostring(minTradesInput), text_color = color.gray)
         table.cell(optTable, 1, 1, "", text_color = color.gray)
 
 alertcondition(shortTaken, title = "Bullish→Bearish reversal", message = "Bullish→Bearish reversal: short setup triggered")
