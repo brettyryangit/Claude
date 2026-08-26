@@ -37,13 +37,23 @@ isBearishPrev = close[1] < open[1]
 isBullishNow  = close > open
 isBearishNow  = close < open
 
-shortCandidate = takeShorts and barstate.isconfirmed and not tradeActive and isBullishPrev and isBearishNow
-longCandidate  = takeLongs  and barstate.isconfirmed and not tradeActive and isBearishPrev and isBullishNow
+shortFlip = takeShorts and barstate.isconfirmed and isBullishPrev and isBearishNow
+longFlip  = takeLongs  and barstate.isconfirmed and isBearishPrev and isBullishNow
 
 bool shortTaken = false
 bool longTaken  = false
 
-if shortCandidate
+// A flip that happens while a trade is already open is still labeled, so no
+// signal ever passes silently — it's just deferred rather than evaluated.
+if shortFlip and tradeActive
+    if showSkippedLabels
+        label.new(bar_index, high, text = "no trade\n(trade in progress)", style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
+
+if longFlip and tradeActive
+    if showSkippedLabels
+        label.new(bar_index, low, text = "no trade\n(trade in progress)", style = label.style_label_up, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
+
+if shortFlip and not tradeActive
     refHigh   = high[stopLookback]
     candEntry = close
 
@@ -75,7 +85,7 @@ if shortCandidate
         skipText = not wickOk ? "no trade\n(wick broke stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
         label.new(bar_index, high, text = skipText, style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
-if longCandidate
+if longFlip and not tradeActive
     refLow    = low[stopLookback]
     candEntry = close
 
