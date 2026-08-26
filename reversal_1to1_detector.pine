@@ -57,16 +57,13 @@ if shortFlip and not tradeActive
     refHigh   = high[stopLookback]
     candEntry = close
 
-    // The stop only belongs above the reference candle's high if the signal candle's
-    // own wick hasn't already poked up through it — otherwise the stop would have
-    // been hit before/at entry, so the setup is invalid rather than clamped.
-    // When the reference candle IS the signal candle (lookback 0) that check is
-    // moot — the stop is just the signal candle's own high, always valid.
-    wickOk       = stopLookback == 0 or high < refHigh
+    // The reference candle's high is used as the stop regardless of whether the
+    // signal candle's own wick already poked through it — only the resulting
+    // risk distance is what decides whether the trade is taken.
     naturalTicks = int(math.round((refHigh - candEntry) / tickSize))
     riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
-    if wickOk and riskOk
+    if riskOk
         entryPrice    := candEntry
         riskTicks     := naturalTicks
         stopPrice     := entryPrice + riskTicks * tickSize
@@ -82,21 +79,20 @@ if shortFlip and not tradeActive
 
         label.new(bar_index, stopPrice, text = "SHORT @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_down, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
     else if showSkippedLabels
-        skipText = not wickOk ? "no trade\n(wick broke stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
+        skipText = naturalTicks < 1 ? "no trade\n(invalid stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
         label.new(bar_index, high, text = skipText, style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
 if longFlip and not tradeActive
     refLow    = low[stopLookback]
     candEntry = close
 
-    // Symmetric guard: the stop only belongs below the reference candle's low if
-    // the signal candle's own wick hasn't already poked down through it. When the
-    // reference candle IS the signal candle (lookback 0) that check is moot.
-    wickOk       = stopLookback == 0 or low > refLow
+    // Symmetric: the reference candle's low is used as the stop regardless of
+    // whether the signal candle's own wick already poked through it — only the
+    // resulting risk distance decides whether the trade is taken.
     naturalTicks = int(math.round((candEntry - refLow) / tickSize))
     riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
-    if wickOk and riskOk
+    if riskOk
         entryPrice    := candEntry
         riskTicks     := naturalTicks
         stopPrice     := entryPrice - riskTicks * tickSize
@@ -112,7 +108,7 @@ if longFlip and not tradeActive
 
         label.new(bar_index, stopPrice, text = "LONG @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_up, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
     else if showSkippedLabels
-        skipText = not wickOk ? "no trade\n(wick broke stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
+        skipText = naturalTicks < 1 ? "no trade\n(invalid stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
         label.new(bar_index, low, text = skipText, style = label.style_label_up, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
 if tradeActive
