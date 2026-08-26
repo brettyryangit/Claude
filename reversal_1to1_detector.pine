@@ -1,12 +1,14 @@
 //@version=6
-indicator("Candle Reversal — 1:1 Trade Detector (Max 124 Tick Risk)", overlay = true, max_boxes_count = 500, max_labels_count = 500, max_lines_count = 500)
+indicator("Candle Reversal — Fixed R:R Trade Detector", overlay = true, max_boxes_count = 500, max_labels_count = 500, max_lines_count = 500)
 
 // ---- Inputs ----------------------------------------------------------------
-maxRiskTicksInput = input.int(124, title = "Max Risk (ticks)", minval = 1)
+maxRiskTicksInput = input.int(124, title = "Max Risk (ticks) — skip trade if exceeded", minval = 1)
+rewardRatioInput  = input.float(1.0, title = "Reward:Risk Ratio (1.0 = 1:1, 2.0 = 1:2, etc.)", minval = 0.1, step = 0.1)
 takeShorts        = input.bool(true, title = "Take bullish→bearish (short) signals")
 takeLongs         = input.bool(true, title = "Take bearish→bullish (long) signals")
 showWinLabels     = input.bool(true, title = "Show winning trade labels")
 showLossLabels    = input.bool(true, title = "Show losing trade labels")
+showSkippedLabels = input.bool(true, title = "Show skipped-signal labels")
 showStatsTable    = input.bool(true, title = "Show stats table")
 
 tickSize = syminfo.mintick
@@ -34,52 +36,70 @@ isBearishPrev = close[1] < open[1]
 isBullishNow  = close > open
 isBearishNow  = close < open
 
-shortSignal = takeShorts and barstate.isconfirmed and not tradeActive and isBullishPrev and isBearishNow
-longSignal  = takeLongs  and barstate.isconfirmed and not tradeActive and isBearishPrev and isBullishNow
+shortCandidate = takeShorts and barstate.isconfirmed and not tradeActive and isBullishPrev and isBearishNow
+longCandidate  = takeLongs  and barstate.isconfirmed and not tradeActive and isBearishPrev and isBullishNow
 
-if shortSignal
-    priorHigh   = high[1]
-    entryPrice := close
+bool shortTaken = false
+bool longTaken  = false
 
-    // Stop must sit beyond the prior (last bullish) candle's high, but risk is
-    // capped at maxRiskTicksInput — if the prior high is farther away than that,
-    // the stop is pulled in to the cap instead of following the candle out.
-    naturalTicks = int(math.round((priorHigh - entryPrice) / tickSize))
-    riskTicks   := int(math.max(math.min(naturalTicks, maxRiskTicksInput), 1))
+if shortCandidate
+    priorHigh = high[1]
+    candEntry = close
 
-    stopPrice     := entryPrice + riskTicks * tickSize
-    targetPrice   := entryPrice - riskTicks * tickSize
-    entryBarIndex := bar_index
-    tradeActive   := true
-    tradeIsLong   := false
+    // The stop only belongs above the prior candle's high if the signal candle's
+    // own wick hasn't already poked up through it — otherwise the stop would have
+    // been hit before/at entry, so the setup is invalid rather than clamped.
+    wickOk       = high < priorHigh
+    naturalTicks = int(math.round((priorHigh - candEntry) / tickSize))
+    riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
-    riskBox   := box.new(bar_index, stopPrice, bar_index, entryPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
-    rewardBox := box.new(bar_index, entryPrice, bar_index, targetPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
-    entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
+    if wickOk and riskOk
+        entryPrice    := candEntry
+        riskTicks     := naturalTicks
+        stopPrice     := entryPrice + riskTicks * tickSize
+        targetPrice   := entryPrice - riskTicks * rewardRatioInput * tickSize
+        entryBarIndex := bar_index
+        tradeActive   := true
+        tradeIsLong   := false
+        shortTaken    := true
 
-    label.new(bar_index, stopPrice, text = "SHORT @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:1)", style = label.style_label_down, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+        riskBox   := box.new(bar_index, stopPrice, bar_index, entryPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
+        rewardBox := box.new(bar_index, entryPrice, bar_index, targetPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
+        entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
 
-if longSignal
-    priorLow    = low[1]
-    entryPrice := close
+        label.new(bar_index, stopPrice, text = "SHORT @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_down, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+    else if showSkippedLabels
+        skipText = not wickOk ? "no trade\n(wick broke stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
+        label.new(bar_index, high, text = skipText, style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
-    // Stop must sit beyond the prior (last bearish) candle's low, but risk is
-    // capped at maxRiskTicksInput — if the prior low is farther away than that,
-    // the stop is pulled in to the cap instead of following the candle out.
-    naturalTicks = int(math.round((entryPrice - priorLow) / tickSize))
-    riskTicks   := int(math.max(math.min(naturalTicks, maxRiskTicksInput), 1))
+if longCandidate
+    priorLow  = low[1]
+    candEntry = close
 
-    stopPrice     := entryPrice - riskTicks * tickSize
-    targetPrice   := entryPrice + riskTicks * tickSize
-    entryBarIndex := bar_index
-    tradeActive   := true
-    tradeIsLong   := true
+    // Symmetric guard: the stop only belongs below the prior candle's low if the
+    // signal candle's own wick hasn't already poked down through it.
+    wickOk       = low > priorLow
+    naturalTicks = int(math.round((candEntry - priorLow) / tickSize))
+    riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
-    riskBox   := box.new(bar_index, entryPrice, bar_index, stopPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
-    rewardBox := box.new(bar_index, targetPrice, bar_index, entryPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
-    entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
+    if wickOk and riskOk
+        entryPrice    := candEntry
+        riskTicks     := naturalTicks
+        stopPrice     := entryPrice - riskTicks * tickSize
+        targetPrice   := entryPrice + riskTicks * rewardRatioInput * tickSize
+        entryBarIndex := bar_index
+        tradeActive   := true
+        tradeIsLong   := true
+        longTaken     := true
 
-    label.new(bar_index, stopPrice, text = "LONG @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:1)", style = label.style_label_up, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+        riskBox   := box.new(bar_index, entryPrice, bar_index, stopPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
+        rewardBox := box.new(bar_index, targetPrice, bar_index, entryPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
+        entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
+
+        label.new(bar_index, stopPrice, text = "LONG @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_up, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+    else if showSkippedLabels
+        skipText = not wickOk ? "no trade\n(wick broke stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
+        label.new(bar_index, low, text = skipText, style = label.style_label_up, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
 if tradeActive
     box.set_right(riskBox, bar_index)
@@ -97,9 +117,9 @@ if tradeActive
 
             if won
                 totalWins += 1
-                netTicks  += riskTicks
+                netTicks  += int(math.round(riskTicks * rewardRatioInput))
                 if showWinLabels
-                    label.new(bar_index, targetPrice, text = "WON +" + str.tostring(riskTicks) + " ticks", style = tradeIsLong ? label.style_label_up : label.style_label_down, color = color.new(color.green, 10), textcolor = color.white, size = size.normal)
+                    label.new(bar_index, targetPrice, text = "WON +" + str.tostring(int(math.round(riskTicks * rewardRatioInput))) + " ticks", style = tradeIsLong ? label.style_label_up : label.style_label_down, color = color.new(color.green, 10), textcolor = color.white, size = size.normal)
             else
                 totalLosses += 1
                 netTicks    -= riskTicks
@@ -122,5 +142,5 @@ if showStatsTable and barstate.islast
     table.cell(statsTable, 0, 3, "Net ticks", text_color = color.white)
     table.cell(statsTable, 1, 3, str.tostring(netTicks), text_color = netTicks >= 0 ? color.green : color.red)
 
-alertcondition(shortSignal, title = "Bullish→Bearish reversal", message = "Bullish→Bearish reversal: short setup triggered")
-alertcondition(longSignal,  title = "Bearish→Bullish reversal", message = "Bearish→Bullish reversal: long setup triggered")
+alertcondition(shortTaken, title = "Bullish→Bearish reversal", message = "Bullish→Bearish reversal: short setup triggered")
+alertcondition(longTaken,  title = "Bearish→Bullish reversal", message = "Bearish→Bullish reversal: long setup triggered")
