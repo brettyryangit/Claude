@@ -27,6 +27,14 @@ optimizerMetric   = input.string("Profit Factor", title = "Optimizer: rank by", 
 riskPerTradeInput = input.float(200, title = "Optimizer: $ risked per trade", minval = 0.01, group = "Parameter Optimizer")
 maxStreakInput    = input.int(10, title = "Optimizer: max acceptable losing streak (trades)", minval = 1, group = "Parameter Optimizer")
 
+enableTFOptimizer = input.bool(true, title = "Timeframe Optimizer: enabled", group = "Timeframe Optimizer")
+tf1Input          = input.timeframe("5",  title = "Timeframe Optimizer: TF #1", group = "Timeframe Optimizer")
+tf2Input          = input.timeframe("15", title = "Timeframe Optimizer: TF #2", group = "Timeframe Optimizer")
+tf3Input          = input.timeframe("30", title = "Timeframe Optimizer: TF #3", group = "Timeframe Optimizer")
+tf4Input          = input.timeframe("60", title = "Timeframe Optimizer: TF #4", group = "Timeframe Optimizer")
+tf5Input          = input.timeframe("240",title = "Timeframe Optimizer: TF #5", group = "Timeframe Optimizer")
+tf6Input          = input.timeframe("D",  title = "Timeframe Optimizer: TF #6", group = "Timeframe Optimizer")
+
 tickSize = syminfo.mintick
 
 // ---- Live trade state -------------------------------------------------------
@@ -138,6 +146,145 @@ f_manageCombo(i) =>
                 array.set(comboCurStreak, i, newStreak)
                 array.set(comboMaxStreak, i, math.max(array.get(comboMaxStreak, i), newStreak))
             array.set(comboActive, i, false)
+
+// ---- Timeframe optimizer state -----------------------------------------------
+// Tests each configured timeframe's OWN candle closes (via request.security),
+// using the live setup's current Max Risk / R:R, to see which timeframe performs
+// best for shorts and which for longs. Runs one trade at a time per (TF, direction)
+// slot, same tradeoff as the R:R/risk optimizer above. Stop/target hits are still
+// checked against this chart's own high/low (always the finer, more accurate feed),
+// so this indicator should be applied on a chart timeframe at or below the
+// smallest tested TF for the results to be meaningful. Unlike the main setup, the
+// stop reference here is always "one candle before" regardless of the
+// Stop Reference Candle input — tracking that input's 0/2 options per timeframe
+// would need a much deeper per-TF candle history than is worth the complexity here.
+var array<string> tfLabel          = array.new<string>(0)
+var array<bool>   tfHasStored      = array.new<bool>(0)
+var array<bool>   tfStoredBullish  = array.new<bool>(0)
+var array<float>  tfStoredHigh     = array.new<float>(0)
+var array<float>  tfStoredLow      = array.new<float>(0)
+var array<bool>   tfShortActive    = array.new<bool>(0)
+var array<float>  tfShortStop      = array.new<float>(0)
+var array<float>  tfShortTarget    = array.new<float>(0)
+var array<int>    tfShortEntryBar  = array.new<int>(0)
+var array<int>    tfShortRiskTicks = array.new<int>(0)
+var array<int>    tfShortWins      = array.new<int>(0)
+var array<int>    tfShortLosses    = array.new<int>(0)
+var array<float>  tfShortGrossProfit = array.new<float>(0)
+var array<float>  tfShortGrossLoss   = array.new<float>(0)
+var array<bool>   tfLongActive     = array.new<bool>(0)
+var array<float>  tfLongStop       = array.new<float>(0)
+var array<float>  tfLongTarget     = array.new<float>(0)
+var array<int>    tfLongEntryBar   = array.new<int>(0)
+var array<int>    tfLongRiskTicks  = array.new<int>(0)
+var array<int>    tfLongWins       = array.new<int>(0)
+var array<int>    tfLongLosses     = array.new<int>(0)
+var array<float>  tfLongGrossProfit  = array.new<float>(0)
+var array<float>  tfLongGrossLoss    = array.new<float>(0)
+var bool          tfInit           = false
+
+if enableTFOptimizer and not tfInit
+    tfInit := true
+    for _ = 0 to 5
+        array.push(tfLabel, "")
+        array.push(tfHasStored, false)
+        array.push(tfStoredBullish, false)
+        array.push(tfStoredHigh, na)
+        array.push(tfStoredLow, na)
+        array.push(tfShortActive, false)
+        array.push(tfShortStop, na)
+        array.push(tfShortTarget, na)
+        array.push(tfShortEntryBar, 0)
+        array.push(tfShortRiskTicks, 0)
+        array.push(tfShortWins, 0)
+        array.push(tfShortLosses, 0)
+        array.push(tfShortGrossProfit, 0.0)
+        array.push(tfShortGrossLoss, 0.0)
+        array.push(tfLongActive, false)
+        array.push(tfLongStop, na)
+        array.push(tfLongTarget, na)
+        array.push(tfLongEntryBar, 0)
+        array.push(tfLongRiskTicks, 0)
+        array.push(tfLongWins, 0)
+        array.push(tfLongLosses, 0)
+        array.push(tfLongGrossProfit, 0.0)
+        array.push(tfLongGrossLoss, 0.0)
+    array.set(tfLabel, 0, tf1Input)
+    array.set(tfLabel, 1, tf2Input)
+    array.set(tfLabel, 2, tf3Input)
+    array.set(tfLabel, 3, tf4Input)
+    array.set(tfLabel, 4, tf5Input)
+    array.set(tfLabel, 5, tf6Input)
+
+f_processTF(idx, htfTime, htfOpen, htfHigh, htfLow, htfClose) =>
+    newBar = ta.change(htfTime) != 0
+    if newBar
+        cOpen    = htfOpen[1]
+        cClose   = htfClose[1]
+        cHigh    = htfHigh[1]
+        cLow     = htfLow[1]
+        cBullish = cClose > cOpen
+        cBearish = cClose < cOpen
+
+        if array.get(tfHasStored, idx)
+            pBullish = array.get(tfStoredBullish, idx)
+            pHigh    = array.get(tfStoredHigh, idx)
+            pLow     = array.get(tfStoredLow, idx)
+
+            if not array.get(tfShortActive, idx) and pBullish and cBearish
+                natTicks = int(math.round((pHigh - cClose) / tickSize))
+                if natTicks >= 1 and natTicks <= maxRiskTicksInput
+                    array.set(tfShortActive, idx, true)
+                    array.set(tfShortStop, idx, cClose + natTicks * tickSize)
+                    array.set(tfShortTarget, idx, cClose - natTicks * rewardRatioInput * tickSize)
+                    array.set(tfShortEntryBar, idx, bar_index)
+                    array.set(tfShortRiskTicks, idx, natTicks)
+
+            if not array.get(tfLongActive, idx) and (not pBullish) and cBullish
+                natTicks = int(math.round((cClose - pLow) / tickSize))
+                if natTicks >= 1 and natTicks <= maxRiskTicksInput
+                    array.set(tfLongActive, idx, true)
+                    array.set(tfLongStop, idx, cClose - natTicks * tickSize)
+                    array.set(tfLongTarget, idx, cClose + natTicks * rewardRatioInput * tickSize)
+                    array.set(tfLongEntryBar, idx, bar_index)
+                    array.set(tfLongRiskTicks, idx, natTicks)
+
+        array.set(tfStoredBullish, idx, cBullish)
+        array.set(tfStoredHigh, idx, cHigh)
+        array.set(tfStoredLow, idx, cLow)
+        array.set(tfHasStored, idx, true)
+
+    if array.get(tfShortActive, idx) and bar_index > array.get(tfShortEntryBar, idx)
+        sStop   = array.get(tfShortStop, idx)
+        sTarget = array.get(tfShortTarget, idx)
+        sHitStop   = high >= sStop
+        sHitTarget = low  <= sTarget
+        if sHitStop or sHitTarget
+            sWon   = sHitTarget and not sHitStop
+            sRiskT = array.get(tfShortRiskTicks, idx)
+            if sWon
+                array.set(tfShortWins, idx, array.get(tfShortWins, idx) + 1)
+                array.set(tfShortGrossProfit, idx, array.get(tfShortGrossProfit, idx) + sRiskT * rewardRatioInput)
+            else
+                array.set(tfShortLosses, idx, array.get(tfShortLosses, idx) + 1)
+                array.set(tfShortGrossLoss, idx, array.get(tfShortGrossLoss, idx) + sRiskT)
+            array.set(tfShortActive, idx, false)
+
+    if array.get(tfLongActive, idx) and bar_index > array.get(tfLongEntryBar, idx)
+        lStop   = array.get(tfLongStop, idx)
+        lTarget = array.get(tfLongTarget, idx)
+        lHitStop   = low  <= lStop
+        lHitTarget = high >= lTarget
+        if lHitStop or lHitTarget
+            lWon   = lHitTarget and not lHitStop
+            lRiskT = array.get(tfLongRiskTicks, idx)
+            if lWon
+                array.set(tfLongWins, idx, array.get(tfLongWins, idx) + 1)
+                array.set(tfLongGrossProfit, idx, array.get(tfLongGrossProfit, idx) + lRiskT * rewardRatioInput)
+            else
+                array.set(tfLongLosses, idx, array.get(tfLongLosses, idx) + 1)
+                array.set(tfLongGrossLoss, idx, array.get(tfLongGrossLoss, idx) + lRiskT)
+            array.set(tfLongActive, idx, false)
 
 // ---- Signal detection --------------------------------------------------------
 // A flip is only actionable once the flipping candle has actually closed,
@@ -280,6 +427,21 @@ if liveCount > 0
 
                     array.set(liveActive, i, false)
 
+// ---- Timeframe optimizer processing (one request.security call per TF slot) -
+if enableTFOptimizer
+    [t0, o0, h0, l0, c0] = request.security(syminfo.tickerid, tf1Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(0, t0, o0, h0, l0, c0)
+    [t1, o1, h1, l1, c1] = request.security(syminfo.tickerid, tf2Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(1, t1, o1, h1, l1, c1)
+    [t2, o2, h2, l2, c2] = request.security(syminfo.tickerid, tf3Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(2, t2, o2, h2, l2, c2)
+    [t3, o3, h3, l3, c3] = request.security(syminfo.tickerid, tf4Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(3, t3, o3, h3, l3, c3)
+    [t4, o4, h4, l4, c4] = request.security(syminfo.tickerid, tf5Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(4, t4, o4, h4, l4, c4)
+    [t5, o5, h5, l5, c5] = request.security(syminfo.tickerid, tf6Input, [time, open, high, low, close], lookahead = barmerge.lookahead_off)
+    f_processTF(5, t5, o5, h5, l5, c5)
+
 // ---- Stats table (live setup) -------------------------------------------------
 if showStatsTable and barstate.islast
     var table statsTable = table.new(position.top_right, 2, 7, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
@@ -359,6 +521,54 @@ if enableOptimizer and barstate.islast and comboCount > 0
     else
         table.cell(optTable, 0, 1, "no combo fits: streak≤" + str.tostring(maxAllowedStreak) + ", trades≥" + str.tostring(minTradesInput), text_color = color.gray)
         table.cell(optTable, 1, 1, "", text_color = color.gray)
+
+// ---- Timeframe optimizer results table -----------------------------------------
+if enableTFOptimizer and barstate.islast
+    var table tfTable = table.new(position.bottom_left, 3, 7, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+
+    bestShortIdx = -1
+    bestShortPF  = -1.0
+    bestLongIdx  = -1
+    bestLongPF   = -1.0
+    for i = 0 to 5
+        sTrades = array.get(tfShortWins, i) + array.get(tfShortLosses, i)
+        if sTrades >= minTradesInput
+            sgp = array.get(tfShortGrossProfit, i)
+            sgl = array.get(tfShortGrossLoss, i)
+            spf = sgl > 0 ? sgp / sgl : (sgp > 0 ? 999.0 : 0.0)
+            if spf > bestShortPF
+                bestShortPF  := spf
+                bestShortIdx := i
+        lTrades = array.get(tfLongWins, i) + array.get(tfLongLosses, i)
+        if lTrades >= minTradesInput
+            lgp = array.get(tfLongGrossProfit, i)
+            lgl = array.get(tfLongGrossLoss, i)
+            lpf = lgl > 0 ? lgp / lgl : (lgp > 0 ? 999.0 : 0.0)
+            if lpf > bestLongPF
+                bestLongPF  := lpf
+                bestLongIdx := i
+
+    table.cell(tfTable, 0, 0, "Timeframe", text_color = color.yellow)
+    table.cell(tfTable, 1, 0, "Short PF (n)", text_color = color.yellow)
+    table.cell(tfTable, 2, 0, "Long PF (n)", text_color = color.yellow)
+
+    for i = 0 to 5
+        sw  = array.get(tfShortWins, i)
+        sl  = array.get(tfShortLosses, i)
+        st  = sw + sl
+        sgp = array.get(tfShortGrossProfit, i)
+        sgl = array.get(tfShortGrossLoss, i)
+        spf = sgl > 0 ? sgp / sgl : (sgp > 0 ? 999.0 : 0.0)
+        lw  = array.get(tfLongWins, i)
+        ll  = array.get(tfLongLosses, i)
+        lt  = lw + ll
+        lgp = array.get(tfLongGrossProfit, i)
+        lgl = array.get(tfLongGrossLoss, i)
+        lpf = lgl > 0 ? lgp / lgl : (lgp > 0 ? 999.0 : 0.0)
+
+        table.cell(tfTable, 0, i + 1, array.get(tfLabel, i), text_color = color.white)
+        table.cell(tfTable, 1, i + 1, (st > 0 ? str.tostring(spf, "#.##") : "n/a") + " (" + str.tostring(st) + ")", text_color = i == bestShortIdx ? color.green : color.white)
+        table.cell(tfTable, 2, i + 1, (lt > 0 ? str.tostring(lpf, "#.##") : "n/a") + " (" + str.tostring(lt) + ")", text_color = i == bestLongIdx ? color.green : color.white)
 
 alertcondition(shortTaken, title = "Bullish→Bearish reversal", message = "Bullish→Bearish reversal: short setup triggered")
 alertcondition(longTaken,  title = "Bearish→Bullish reversal", message = "Bearish→Bullish reversal: long setup triggered")
