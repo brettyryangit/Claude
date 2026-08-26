@@ -23,23 +23,24 @@ minTradesInput    = input.int(5, title = "Optimizer: min trades to qualify", min
 
 tickSize = syminfo.mintick
 
-// ---- Persistent trade state (live setup using the inputs above) ------------
-var bool  tradeActive   = false
-var bool  tradeIsLong   = false
-var float entryPrice    = na
-var float stopPrice     = na
-var float targetPrice   = na
-var int   riskTicks     = na
-var int   entryBarIndex = na
-var box   riskBox       = na
-var box   rewardBox     = na
-var line  entryLine     = na
+// ---- Live trade state -------------------------------------------------------
+// Every qualifying flip opens its own trade, independent of any others still
+// running — these are growing lists of concurrently open trades, not a single slot.
+var array<bool>  liveActive    = array.new<bool>(0)
+var array<bool>  liveIsLong    = array.new<bool>(0)
+var array<float> liveStop      = array.new<float>(0)
+var array<float> liveTarget    = array.new<float>(0)
+var array<int>   liveEntryBar  = array.new<int>(0)
+var array<int>   liveRiskTicks = array.new<int>(0)
+var array<box>   liveRiskBox   = array.new<box>(0)
+var array<box>   liveRewardBox = array.new<box>(0)
+var array<line>  liveEntryLine = array.new<line>(0)
 
-var int   totalWins        = 0
-var int   totalLosses      = 0
-var int   netTicks         = 0
-var float grossProfitTicks = 0.0
-var float grossLossTicks   = 0.0
+var int   totalWins         = 0
+var int   totalLosses       = 0
+var int   netTicks          = 0
+var float grossProfitTicks  = 0.0
+var float grossLossTicks    = 0.0
 var int   currentLossStreak = 0
 var int   maxLossStreak     = 0
 var int   startTime         = na
@@ -51,6 +52,9 @@ if barstate.isfirst
 // Sweeps every (R:R, Max Risk) combination across the chart's history using the
 // same signal/reference-candle rules as the live setup, tracking each combo's
 // own win/loss record independently so the best-performing pair can be surfaced.
+// Unlike the live setup above, each combo here runs one trade at a time — testing
+// every combo's own unlimited-concurrency version would be far more expensive to
+// compute, and one-at-a-time is enough to rank combos against each other.
 var array<float> comboRR          = array.new<float>(0)
 var array<int>   comboRiskCap     = array.new<int>(0)
 var array<bool>  comboActive      = array.new<bool>(0)
@@ -146,56 +150,64 @@ if shortFlip
 if longFlip
     longNaturalTicks := int(math.round((close - low[stopLookback]) / tickSize))
 
-// A flip that happens while the live trade slot is already open is still
-// labeled, so no signal ever passes silently — it's just deferred.
-if shortFlip and tradeActive
-    if showSkippedLabels
-        label.new(bar_index, high, text = "no trade\n(trade in progress)", style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
-
-if longFlip and tradeActive
-    if showSkippedLabels
-        label.new(bar_index, low, text = "no trade\n(trade in progress)", style = label.style_label_up, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
-
-if shortFlip and not tradeActive
+// Every qualifying flip opens its own trade — no gating on other trades already
+// running, so several can be in flight at once, same as in the screenshot.
+if shortFlip
     riskOk = shortNaturalTicks >= 1 and shortNaturalTicks <= maxRiskTicksInput
 
     if riskOk
-        entryPrice    := close
-        riskTicks     := shortNaturalTicks
-        stopPrice     := entryPrice + riskTicks * tickSize
-        targetPrice   := entryPrice - riskTicks * rewardRatioInput * tickSize
-        entryBarIndex := bar_index
-        tradeActive   := true
-        tradeIsLong   := false
-        shortTaken    := true
+        riskT    = shortNaturalTicks
+        entryPx  = close
+        stopPx   = entryPx + riskT * tickSize
+        targetPx = entryPx - riskT * rewardRatioInput * tickSize
 
-        riskBox   := box.new(bar_index, stopPrice, bar_index, entryPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
-        rewardBox := box.new(bar_index, entryPrice, bar_index, targetPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
-        entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
+        rBox  = box.new(bar_index, stopPx, bar_index, entryPx, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
+        gBox  = box.new(bar_index, entryPx, bar_index, targetPx, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
+        eLine = line.new(bar_index, entryPx, bar_index, entryPx, color = color.new(color.gray, 20), style = line.style_dashed)
 
-        label.new(bar_index, stopPrice, text = "SHORT @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_down, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+        array.push(liveActive, true)
+        array.push(liveIsLong, false)
+        array.push(liveStop, stopPx)
+        array.push(liveTarget, targetPx)
+        array.push(liveEntryBar, bar_index)
+        array.push(liveRiskTicks, riskT)
+        array.push(liveRiskBox, rBox)
+        array.push(liveRewardBox, gBox)
+        array.push(liveEntryLine, eLine)
+
+        shortTaken := true
+
+        label.new(bar_index, stopPx, text = "SHORT @ " + str.tostring(entryPx) + "\nrisk " + str.tostring(riskT) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_down, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
     else if showSkippedLabels
         skipText = shortNaturalTicks < 1 ? "no trade\n(invalid stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
         label.new(bar_index, high, text = skipText, style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
-if longFlip and not tradeActive
+if longFlip
     riskOk = longNaturalTicks >= 1 and longNaturalTicks <= maxRiskTicksInput
 
     if riskOk
-        entryPrice    := close
-        riskTicks     := longNaturalTicks
-        stopPrice     := entryPrice - riskTicks * tickSize
-        targetPrice   := entryPrice + riskTicks * rewardRatioInput * tickSize
-        entryBarIndex := bar_index
-        tradeActive   := true
-        tradeIsLong   := true
-        longTaken     := true
+        riskT    = longNaturalTicks
+        entryPx  = close
+        stopPx   = entryPx - riskT * tickSize
+        targetPx = entryPx + riskT * rewardRatioInput * tickSize
 
-        riskBox   := box.new(bar_index, entryPrice, bar_index, stopPrice, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
-        rewardBox := box.new(bar_index, targetPrice, bar_index, entryPrice, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
-        entryLine := line.new(bar_index, entryPrice, bar_index, entryPrice, color = color.new(color.gray, 20), style = line.style_dashed)
+        rBox  = box.new(bar_index, entryPx, bar_index, stopPx, border_color = color.new(color.red, 40), bgcolor = color.new(color.red, 85))
+        gBox  = box.new(bar_index, targetPx, bar_index, entryPx, border_color = color.new(color.green, 40), bgcolor = color.new(color.green, 85))
+        eLine = line.new(bar_index, entryPx, bar_index, entryPx, color = color.new(color.gray, 20), style = line.style_dashed)
 
-        label.new(bar_index, stopPrice, text = "LONG @ " + str.tostring(entryPrice) + "\nrisk " + str.tostring(riskTicks) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_up, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
+        array.push(liveActive, true)
+        array.push(liveIsLong, true)
+        array.push(liveStop, stopPx)
+        array.push(liveTarget, targetPx)
+        array.push(liveEntryBar, bar_index)
+        array.push(liveRiskTicks, riskT)
+        array.push(liveRiskBox, rBox)
+        array.push(liveRewardBox, gBox)
+        array.push(liveEntryLine, eLine)
+
+        longTaken := true
+
+        label.new(bar_index, stopPx, text = "LONG @ " + str.tostring(entryPx) + "\nrisk " + str.tostring(riskT) + "t (1:" + str.tostring(rewardRatioInput) + ")", style = label.style_label_up, color = color.new(color.red, 70), textcolor = color.white, size = size.small)
     else if showSkippedLabels
         skipText = longNaturalTicks < 1 ? "no trade\n(invalid stop)" : "no trade\n(>" + str.tostring(maxRiskTicksInput) + " ticks)"
         label.new(bar_index, low, text = skipText, style = label.style_label_up, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
@@ -210,38 +222,47 @@ if enableOptimizer and comboCount > 0
     for i = 0 to comboCount - 1
         f_manageCombo(i)
 
-if tradeActive
-    box.set_right(riskBox, bar_index)
-    box.set_right(rewardBox, bar_index)
-    line.set_x2(entryLine, bar_index)
+// ---- Live trade management (every currently open trade, every bar) ----------
+liveCount = array.size(liveActive)
+if liveCount > 0
+    for i = 0 to liveCount - 1
+        if array.get(liveActive, i)
+            isLong   = array.get(liveIsLong, i)
+            stopPx   = array.get(liveStop, i)
+            targetPx = array.get(liveTarget, i)
+            box.set_right(array.get(liveRiskBox, i), bar_index)
+            box.set_right(array.get(liveRewardBox, i), bar_index)
+            line.set_x2(array.get(liveEntryLine, i), bar_index)
 
-    if bar_index > entryBarIndex
-        hitStop   = tradeIsLong ? low <= stopPrice   : high >= stopPrice
-        hitTarget = tradeIsLong ? high >= targetPrice : low <= targetPrice
+            entryBar = array.get(liveEntryBar, i)
+            if bar_index > entryBar
+                hitStop   = isLong ? low <= stopPx   : high >= stopPx
+                hitTarget = isLong ? high >= targetPx : low <= targetPx
 
-        if hitStop or hitTarget
-            // If both levels are inside the same bar's range there's no way to
-            // know which traded first intrabar — assume the stop, the worse case.
-            won = hitTarget and not hitStop
+                if hitStop or hitTarget
+                    // If both levels are inside the same bar's range there's no way to
+                    // know which traded first intrabar — assume the stop, the worse case.
+                    won   = hitTarget and not hitStop
+                    riskT = array.get(liveRiskTicks, i)
 
-            if won
-                winTicks         = int(math.round(riskTicks * rewardRatioInput))
-                totalWins       += 1
-                netTicks        += winTicks
-                grossProfitTicks += winTicks
-                currentLossStreak := 0
-                if showWinLabels
-                    label.new(bar_index, targetPrice, text = "WON +" + str.tostring(winTicks) + " ticks", style = tradeIsLong ? label.style_label_up : label.style_label_down, color = color.new(color.green, 10), textcolor = color.white, size = size.normal)
-            else
-                totalLosses      += 1
-                netTicks         -= riskTicks
-                grossLossTicks   += riskTicks
-                currentLossStreak += 1
-                maxLossStreak     := math.max(maxLossStreak, currentLossStreak)
-                if showLossLabels
-                    label.new(bar_index, stopPrice, text = "LOST -" + str.tostring(riskTicks) + " ticks", style = tradeIsLong ? label.style_label_down : label.style_label_up, color = color.new(color.red, 10), textcolor = color.white, size = size.normal)
+                    if won
+                        winTicks          = int(math.round(riskT * rewardRatioInput))
+                        totalWins        += 1
+                        netTicks         += winTicks
+                        grossProfitTicks += winTicks
+                        currentLossStreak := 0
+                        if showWinLabels
+                            label.new(bar_index, targetPx, text = "WON +" + str.tostring(winTicks) + " ticks", style = isLong ? label.style_label_up : label.style_label_down, color = color.new(color.green, 10), textcolor = color.white, size = size.normal)
+                    else
+                        totalLosses       += 1
+                        netTicks          -= riskT
+                        grossLossTicks    += riskT
+                        currentLossStreak += 1
+                        maxLossStreak     := math.max(maxLossStreak, currentLossStreak)
+                        if showLossLabels
+                            label.new(bar_index, stopPx, text = "LOST -" + str.tostring(riskT) + " ticks", style = isLong ? label.style_label_down : label.style_label_up, color = color.new(color.red, 10), textcolor = color.white, size = size.normal)
 
-            tradeActive := false
+                    array.set(liveActive, i, false)
 
 // ---- Stats table (live setup) -------------------------------------------------
 if showStatsTable and barstate.islast
