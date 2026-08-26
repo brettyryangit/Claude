@@ -4,6 +4,7 @@ indicator("Candle Reversal — Fixed R:R Trade Detector", overlay = true, max_bo
 // ---- Inputs ----------------------------------------------------------------
 maxRiskTicksInput = input.int(124, title = "Max Risk (ticks) — skip trade if exceeded", minval = 1)
 rewardRatioInput  = input.float(1.0, title = "Reward:Risk Ratio (1.0 = 1:1, 2.0 = 1:2, etc.)", minval = 0.1, step = 0.1)
+stopLookback      = input.int(1, title = "Stop Reference Candle (0=signal candle, 1=one before, 2=two before)", options = [0, 1, 2])
 takeShorts        = input.bool(true, title = "Take bullish→bearish (short) signals")
 takeLongs         = input.bool(true, title = "Take bearish→bullish (long) signals")
 showWinLabels     = input.bool(true, title = "Show winning trade labels")
@@ -43,14 +44,16 @@ bool shortTaken = false
 bool longTaken  = false
 
 if shortCandidate
-    priorHigh = high[1]
+    refHigh   = high[stopLookback]
     candEntry = close
 
-    // The stop only belongs above the prior candle's high if the signal candle's
+    // The stop only belongs above the reference candle's high if the signal candle's
     // own wick hasn't already poked up through it — otherwise the stop would have
     // been hit before/at entry, so the setup is invalid rather than clamped.
-    wickOk       = high < priorHigh
-    naturalTicks = int(math.round((priorHigh - candEntry) / tickSize))
+    // When the reference candle IS the signal candle (lookback 0) that check is
+    // moot — the stop is just the signal candle's own high, always valid.
+    wickOk       = stopLookback == 0 or high < refHigh
+    naturalTicks = int(math.round((refHigh - candEntry) / tickSize))
     riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
     if wickOk and riskOk
@@ -73,13 +76,14 @@ if shortCandidate
         label.new(bar_index, high, text = skipText, style = label.style_label_down, color = color.new(color.gray, 60), textcolor = color.white, size = size.tiny)
 
 if longCandidate
-    priorLow  = low[1]
+    refLow    = low[stopLookback]
     candEntry = close
 
-    // Symmetric guard: the stop only belongs below the prior candle's low if the
-    // signal candle's own wick hasn't already poked down through it.
-    wickOk       = low > priorLow
-    naturalTicks = int(math.round((candEntry - priorLow) / tickSize))
+    // Symmetric guard: the stop only belongs below the reference candle's low if
+    // the signal candle's own wick hasn't already poked down through it. When the
+    // reference candle IS the signal candle (lookback 0) that check is moot.
+    wickOk       = stopLookback == 0 or low > refLow
+    naturalTicks = int(math.round((candEntry - refLow) / tickSize))
     riskOk       = naturalTicks >= 1 and naturalTicks <= maxRiskTicksInput
 
     if wickOk and riskOk
