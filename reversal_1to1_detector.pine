@@ -23,6 +23,7 @@ sweepRiskMin      = input.int(40, title = "Optimizer: Max Risk min (ticks)", min
 sweepRiskMax      = input.int(200, title = "Optimizer: Max Risk max (ticks)", minval = 1, group = "Parameter Optimizer")
 sweepRiskStep     = input.int(20, title = "Optimizer: Max Risk step (ticks)", minval = 1, group = "Parameter Optimizer")
 minTradesInput    = input.int(5, title = "Optimizer: min trades to qualify", minval = 1, group = "Parameter Optimizer")
+optimizerMetric   = input.string("Profit Factor", title = "Optimizer: rank by", options = ["Profit Factor", "Min Losing Streak"], group = "Parameter Optimizer")
 
 tickSize = syminfo.mintick
 
@@ -70,6 +71,8 @@ var array<int>   comboWins        = array.new<int>(0)
 var array<int>   comboLosses      = array.new<int>(0)
 var array<float> comboGrossProfit = array.new<float>(0)
 var array<float> comboGrossLoss   = array.new<float>(0)
+var array<int>   comboCurStreak   = array.new<int>(0)
+var array<int>   comboMaxStreak   = array.new<int>(0)
 var int          comboCount       = 0
 var bool         sweepInit        = false
 
@@ -91,6 +94,8 @@ if enableOptimizer and not sweepInit
             array.push(comboLosses, 0)
             array.push(comboGrossProfit, 0.0)
             array.push(comboGrossLoss, 0.0)
+            array.push(comboCurStreak, 0)
+            array.push(comboMaxStreak, 0)
             risk += sweepRiskStep
         rr += sweepRrStep
     comboCount := array.size(comboRR)
@@ -123,9 +128,13 @@ f_manageCombo(i) =>
             if won
                 array.set(comboWins, i, array.get(comboWins, i) + 1)
                 array.set(comboGrossProfit, i, array.get(comboGrossProfit, i) + riskT * rr)
+                array.set(comboCurStreak, i, 0)
             else
                 array.set(comboLosses, i, array.get(comboLosses, i) + 1)
                 array.set(comboGrossLoss, i, array.get(comboGrossLoss, i) + riskT)
+                newStreak = array.get(comboCurStreak, i) + 1
+                array.set(comboCurStreak, i, newStreak)
+                array.set(comboMaxStreak, i, math.max(array.get(comboMaxStreak, i), newStreak))
             array.set(comboActive, i, false)
 
 // ---- Signal detection --------------------------------------------------------
@@ -293,22 +302,27 @@ if showStatsTable and barstate.islast
 
 // ---- Optimizer results table ---------------------------------------------------
 if enableOptimizer and barstate.islast and comboCount > 0
-    var table optTable = table.new(position.bottom_right, 2, 6, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
+    var table optTable = table.new(position.bottom_right, 2, 7, bgcolor = color.new(color.black, 20), border_color = color.gray, border_width = 1)
 
+    // "Profit Factor" ranks by highest gross-win/gross-loss ratio; "Min Losing
+    // Streak" instead ranks by the fewest consecutive losses a combo suffered —
+    // negating the streak so higher score always means better, for both metrics.
     bestIndex = -1
-    bestPF    = -1.0
+    bestScore = -1.0e9
     for i = 0 to comboCount - 1
         trades = array.get(comboWins, i) + array.get(comboLosses, i)
         if trades >= minTradesInput
-            gp = array.get(comboGrossProfit, i)
-            gl = array.get(comboGrossLoss, i)
-            pf = gl > 0 ? gp / gl : (gp > 0 ? 999.0 : 0.0)
-            if pf > bestPF
-                bestPF    := pf
+            gp     = array.get(comboGrossProfit, i)
+            gl     = array.get(comboGrossLoss, i)
+            pf     = gl > 0 ? gp / gl : (gp > 0 ? 999.0 : 0.0)
+            streak = array.get(comboMaxStreak, i)
+            score  = optimizerMetric == "Profit Factor" ? pf : -streak
+            if score > bestScore
+                bestScore := score
                 bestIndex := i
 
     table.cell(optTable, 0, 0, "Best Setup", text_color = color.yellow)
-    table.cell(optTable, 1, 0, "(by profit factor)", text_color = color.yellow)
+    table.cell(optTable, 1, 0, optimizerMetric == "Profit Factor" ? "(by profit factor)" : "(by min losing streak)", text_color = color.yellow)
 
     if bestIndex >= 0
         bw   = array.get(comboWins, bestIndex)
@@ -317,16 +331,22 @@ if enableOptimizer and barstate.islast and comboCount > 0
         bwr  = bt > 0 ? bw / bt * 100 : 0.0
         brr  = array.get(comboRR, bestIndex)
         brsk = array.get(comboRiskCap, bestIndex)
+        bgp  = array.get(comboGrossProfit, bestIndex)
+        bgl  = array.get(comboGrossLoss, bestIndex)
+        bpf  = bgl > 0 ? bgp / bgl : (bgp > 0 ? 999.0 : 0.0)
+        bstk = array.get(comboMaxStreak, bestIndex)
         table.cell(optTable, 0, 1, "R:R",          text_color = color.white)
         table.cell(optTable, 1, 1, "1:" + str.tostring(brr, "#.##"), text_color = color.white)
         table.cell(optTable, 0, 2, "Max Risk",     text_color = color.white)
         table.cell(optTable, 1, 2, str.tostring(brsk) + "t", text_color = color.white)
         table.cell(optTable, 0, 3, "Profit factor",text_color = color.white)
-        table.cell(optTable, 1, 3, str.tostring(bestPF, "#.##"), text_color = color.green)
-        table.cell(optTable, 0, 4, "Win rate",     text_color = color.white)
-        table.cell(optTable, 1, 4, str.tostring(bwr, "#.#") + "%", text_color = color.white)
-        table.cell(optTable, 0, 5, "Trades",       text_color = color.white)
-        table.cell(optTable, 1, 5, str.tostring(bt), text_color = color.white)
+        table.cell(optTable, 1, 3, str.tostring(bpf, "#.##"), text_color = color.green)
+        table.cell(optTable, 0, 4, "Max losing streak", text_color = color.white)
+        table.cell(optTable, 1, 4, str.tostring(bstk), text_color = color.red)
+        table.cell(optTable, 0, 5, "Win rate",     text_color = color.white)
+        table.cell(optTable, 1, 5, str.tostring(bwr, "#.#") + "%", text_color = color.white)
+        table.cell(optTable, 0, 6, "Trades",       text_color = color.white)
+        table.cell(optTable, 1, 6, str.tostring(bt), text_color = color.white)
     else
         table.cell(optTable, 0, 1, "not enough qualifying trades yet", text_color = color.gray)
         table.cell(optTable, 1, 1, "", text_color = color.gray)
